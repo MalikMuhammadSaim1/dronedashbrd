@@ -1,0 +1,2716 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <title>Drone Assisted AdHoc Network | Command Dashboard</title>
+  <style>
+    /* ==========================================================================
+       CSS VARIABLES & THEME DEFINITIONS
+       ========================================================================== */
+    :root {
+      /* Presentation Slide Colors */
+      --slide-blue: #100b7e;
+      --slide-red: #df0024;
+      --slide-magenta: #b000b5;
+      --brand-gradient: linear-gradient(135deg, #100b7e 0%, #df0024 52%, #b000b5 100%);
+      --brand-gradient-hover: linear-gradient(135deg, #1a12a8 0%, #fa1238 52%, #c900d0 100%);
+      
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-purple: #8b5cf6;
+
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 30px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --bg-body: #070716;
+      --bg-surface: rgba(18, 19, 36, 0.72);
+      --bg-surface-elevated: rgba(28, 30, 56, 0.85);
+      --bg-input: rgba(10, 11, 24, 0.8);
+      --border-color: rgba(255, 255, 255, 0.09);
+      --border-highlight: rgba(255, 255, 255, 0.18);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --shadow-card: 0 16px 36px rgba(0, 0, 0, 0.45);
+      --glass-glow: 0 0 30px rgba(223, 0, 36, 0.15);
+      --card-highlight: rgba(255, 255, 255, 0.03);
+    }
+
+    [data-theme="light"] {
+      --bg-body: #f1f5f9;
+      --bg-surface: rgba(255, 255, 255, 0.85);
+      --bg-surface-elevated: #ffffff;
+      --bg-input: #f8fafc;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-highlight: rgba(0, 0, 0, 0.16);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --shadow-card: 0 12px 30px rgba(15, 23, 42, 0.08);
+      --glass-glow: 0 0 30px rgba(16, 11, 126, 0.08);
+      --card-highlight: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Base Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(16, 11, 126, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(223, 0, 36, 0.09) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    /* ==========================================================================
+       TOP STATUS BAR & EMERGENCY BROADCAST BANNER
+       ========================================================================== */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .top-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse-dot 1.8s infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .btn-gradient {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(223, 0, 36, 0.3);
+    }
+
+    .btn-gradient:hover {
+      background: var(--brand-gradient-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(223, 0, 36, 0.45);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-highlight);
+      background: var(--bg-surface);
+    }
+
+    .btn-danger {
+      background: #dc2626;
+      color: #ffffff;
+    }
+
+    .btn-danger:hover {
+      background: #ef4444;
+    }
+
+    .btn-theme-toggle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: var(--transition);
+    }
+
+    .btn-theme-toggle:hover {
+      transform: rotate(20deg) scale(1.05);
+      border-color: var(--border-highlight);
+    }
+
+    /* Emergency Alert Banner */
+    .emergency-banner {
+      display: none;
+      background: linear-gradient(90deg, #991b1b, #dc2626, #b91c1c);
+      color: #ffffff;
+      padding: 12px 24px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.4);
+      animation: emergency-flash 2.5s infinite;
+      position: sticky;
+      top: 64px;
+      z-index: 99;
+    }
+
+    @keyframes emergency-flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.88; }
+    }
+
+    .emergency-banner-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* ==========================================================================
+       MAIN CONTAINER & HERO PRESENTATION SECTION (From Screenshot)
+       ========================================================================== */
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* The exact layout from Screenshot 2026-10-05 190040.png */
+    .presentation-hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 992px) {
+      .presentation-hero-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .hero-left-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Top Left Title Card */
+    .title-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 32px 36px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(16px);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .title-card::after {
+      content: "";
+      position: absolute;
+      top: -30%;
+      right: -10%;
+      width: 250px;
+      height: 250px;
+      background: radial-gradient(circle, rgba(16, 11, 126, 0.25), transparent 70%);
+      pointer-events: none;
+    }
+
+    .title-card h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .title-card h2 {
+      font-size: 1.85rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: -0.01em;
+    }
+
+    .title-card-meta {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .meta-tag {
+      font-size: 0.76rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .drone-logo-icon {
+      width: 82px;
+      height: 82px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.2));
+    }
+
+    .rotor-blade {
+      transform-origin: center;
+      animation: spin-blade 0.4s linear infinite;
+    }
+
+    @keyframes spin-blade {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Bottom Left Gradient Team Card (From Screenshot) */
+    .team-gradient-card {
+      background: var(--brand-gradient);
+      border-radius: var(--radius-lg);
+      padding: 30px 36px;
+      color: #ffffff;
+      box-shadow: 0 16px 36px rgba(223, 0, 36, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .team-gradient-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15), transparent 60%);
+      pointer-events: none;
+    }
+
+    .team-member-name {
+      font-size: 1.35rem;
+      font-weight: 600;
+      line-height: 1.45;
+      letter-spacing: 0.01em;
+    }
+
+    .team-department {
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-top: 8px;
+      opacity: 0.95;
+    }
+
+    .team-supervisor {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-top: 2px;
+      opacity: 0.95;
+    }
+
+    /* Right Drone Live Flight HUD Card (From Screenshot) */
+    .hero-drone-hud-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      position: relative;
+      min-height: 400px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .hero-drone-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s ease;
+    }
+
+    .hero-drone-hud-card:hover .hero-drone-bg {
+      transform: scale(1.03);
+    }
+
+    .hero-hud-overlay {
+      position: relative;
+      z-index: 2;
+      background: linear-gradient(180deg, rgba(7, 7, 22, 0.2) 0%, rgba(7, 7, 22, 0.85) 70%, rgba(7, 7, 22, 0.96) 100%);
+      padding: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .hud-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .hud-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .hud-stat-box {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+    }
+
+    .hud-stat-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #cbd5e1;
+    }
+
+    .hud-stat-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       NAVIGATION TABS
+       ========================================================================== */
+    .dashboard-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 6px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+      scrollbar-width: none;
+    }
+
+    .dashboard-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background: var(--brand-gradient);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(223, 0, 36, 0.3);
+    }
+
+    .tab-badge {
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-weight: 700;
+    }
+
+    /* Tab Panes */
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       CARDS & GRID LAYOUTS
+       ========================================================================== */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-3, .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid-2, .grid-3, .grid-4 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(14px);
+      position: relative;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-subtitle {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ==========================================================================
+       1. DRONE BATTERY WORKFLOW
+       ========================================================================== */
+    .battery-visual-box {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 16px 0;
+    }
+
+    .battery-meter-container {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      flex-shrink: 0;
+    }
+
+    .battery-meter-svg {
+      transform: rotate(-90deg);
+      width: 100%;
+      height: 100%;
+    }
+
+    .meter-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 12;
+    }
+
+    .meter-bar {
+      fill: none;
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke: #10b981;
+      stroke-dasharray: 377;
+      stroke-dashoffset: 60;
+      transition: stroke-dashoffset 0.8s ease, stroke 0.4s ease;
+    }
+
+    .battery-center-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .battery-pct {
+      font-size: 1.9rem;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1;
+    }
+
+    .battery-unit {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .battery-stats-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .battery-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.88rem;
+    }
+
+    .battery-stat-label {
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .battery-stat-val {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .cell-bars-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .cell-bar-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .cell-bar-track {
+      width: 100%;
+      height: 48px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      display: flex;
+      align-items: flex-end;
+      padding: 2px;
+      overflow: hidden;
+    }
+
+    .cell-bar-fill {
+      width: 100%;
+      height: 82%;
+      background: #10b981;
+      border-radius: 2px;
+      transition: height 0.5s ease;
+    }
+
+    .cell-label {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .cell-volt {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* Simulation Buttons */
+    .sim-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ==========================================================================
+       2. BANDWIDTH & PERFORMANCE MONITOR
+       ========================================================================== */
+    .bandwidth-canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 200px;
+      margin: 16px 0;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    canvas#bandwidthChart {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .speed-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .speed-metric-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+    }
+
+    .speed-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .speed-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 4px;
+    }
+
+    /* ==========================================================================
+       3. CONNECTED USERS WORKFLOW
+       ========================================================================== */
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 14px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    table.data-table th {
+      padding: 12px 16px;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    table.data-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    table.data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .device-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+    }
+
+    .rssi-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+      margin-right: 6px;
+    }
+
+    .rssi-bar {
+      width: 3px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 1px;
+    }
+
+    .rssi-bar:nth-child(1) { height: 4px; }
+    .rssi-bar:nth-child(2) { height: 7px; }
+    .rssi-bar:nth-child(3) { height: 10px; }
+    .rssi-bar:nth-child(4) { height: 14px; }
+
+    .rssi-bar.active { background: #10b981; }
+    .rssi-bar.active.warn { background: #f59e0b; }
+    .rssi-bar.active.bad { background: #ef4444; }
+
+    /* ==========================================================================
+       4. OTHER DRONES (ADHOC MESH)
+       ========================================================================== */
+    .radar-wrapper {
+      position: relative;
+      width: 100%;
+      height: 320px;
+      background: radial-gradient(circle at center, rgba(16, 11, 126, 0.25) 0%, rgba(7, 7, 22, 0.95) 75%);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    canvas#radarCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .peer-drone-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: var(--transition);
+    }
+
+    .peer-drone-card:hover {
+      border-color: var(--border-highlight);
+      transform: translateY(-2px);
+    }
+
+    .peer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .peer-id {
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .peer-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+
+    .peer-metric-box {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 6px 8px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    /* ==========================================================================
+       5. SSID SCAN (WIFI SCANNER)
+       ========================================================================== */
+    .scan-action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .signal-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .signal-excellent { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .signal-good { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+    .signal-fair { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .signal-weak { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    /* ==========================================================================
+       6 & 7. AP & STA FORMS
+       ========================================================================== */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--slide-red);
+      box-shadow: 0 0 0 3px rgba(223, 0, 36, 0.2);
+    }
+
+    .input-with-action {
+      display: flex;
+      gap: 8px;
+    }
+
+    .toggle-switch-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      margin-bottom: 16px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.2);
+      transition: 0.3s;
+      border-radius: 24px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: var(--slide-red);
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* ==========================================================================
+       8. REPLACE DRONE (FAILOVER WORKFLOW)
+       ========================================================================== */
+    .handover-wizard {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .handover-steps-bar {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin: 10px 0 20px 0;
+    }
+
+    .handover-steps-bar::before {
+      content: "";
+      position: absolute;
+      top: 18px;
+      left: 40px;
+      right: 40px;
+      height: 2px;
+      background: var(--border-color);
+      z-index: 1;
+    }
+
+    .step-item {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 80px;
+      text-align: center;
+    }
+
+    .step-bubble {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-surface-elevated);
+      border: 2px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .step-item.active .step-bubble {
+      background: var(--slide-red);
+      border-color: #ffffff;
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(223, 0, 36, 0.6);
+    }
+
+    .step-item.completed .step-bubble {
+      background: #10b981;
+      border-color: #10b981;
+      color: #ffffff;
+    }
+
+    .step-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .handover-log-box {
+      background: #05060f;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      height: 140px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       9. EMERGENCY MESSAGE SYSTEM
+       ========================================================================== */
+    .emergency-panel {
+      border: 1px solid rgba(220, 38, 38, 0.3);
+      background: linear-gradient(180deg, rgba(220, 38, 38, 0.08) 0%, var(--bg-surface) 100%);
+    }
+
+    .urgency-selector {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .urgency-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-input);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .urgency-btn.selected-critical {
+      background: #dc2626;
+      border-color: #ef4444;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    }
+
+    .urgency-btn.selected-warning {
+      background: #d97706;
+      border-color: #f59e0b;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4);
+    }
+
+    .urgency-btn.selected-info {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      color: var(--text-main);
+      box-shadow: var(--shadow-card);
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease;
+      min-width: 280px;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       TOP STATUS BAR
+       ======================================================================== -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span id="nodeStatusText">NODE #01: AIRBORNE / RELAY ACTIVE</span>
+      </div>
+      <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;" id="metClock">
+        MET: 01:48:22
+      </span>
+    </div>
+
+    <div class="top-bar-right">
+      <button class="btn btn-danger" onclick="quickEmergencyModal()" style="font-size: 0.8rem; padding: 6px 14px;">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.146.146 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.163.163 0 0 1-.054.06.116.116 0 0 1-.066.017H1.146a.115.115 0 0 1-.066-.017.163.163 0 0 1-.054-.06.176.176 0 0 1 .002-.183L7.884 2.073a.147.147 0 0 1 .054-.057zm1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566z"/><path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg>
+        SOS BEACON
+      </button>
+
+      <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="Switch Light/Dark Theme">
+        🌙
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       EMERGENCY BROADCAST BANNER (Interactive Alert)
+       ======================================================================== -->
+  <div class="emergency-banner" id="activeEmergencyBanner">
+    <div class="emergency-banner-content">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 1.3rem;">⚠️</span>
+        <div>
+          <span style="text-transform: uppercase; font-size: 0.78rem; opacity: 0.9; letter-spacing: 0.05em;" id="bannerUrgencyLabel">CRITICAL EMERGENCY</span>
+          <div id="bannerMessageText" style="font-size: 0.96rem; font-weight: 700;">EVACUATION NOTICE: AdHoc mesh relay active. Ground teams proceed to Rally Point Delta.</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary" onclick="dismissEmergencyBanner()" style="font-size: 0.78rem; padding: 4px 10px;">
+        Acknowledge
+      </button>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <!-- ======================================================================
+         HERO PRESENTATION CARDS (From Screenshot 2026-10-05 190040.png)
+         ====================================================================== -->
+    <section class="presentation-hero-grid">
+      <!-- Left Stack -->
+      <div class="hero-left-stack">
+        <!-- Title Card -->
+        <div class="title-card">
+          <div>
+            <h1>Drone<br />Assisted</h1>
+            <h2>AdHoc Network</h2>
+            <div class="title-card-meta">
+              <span class="meta-tag">ESP32 NAT ROUTER</span>
+              <span class="meta-tag">AD-HOC MESH</span>
+              <span class="meta-tag">AUTONOMOUS FAILOVER</span>
+            </div>
+          </div>
+
+          <!-- Animated Drone SVG Graphic -->
+          <svg class="drone-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Center Drone Body -->
+            <circle cx="50" cy="50" r="16" fill="white" />
+            <circle cx="50" cy="50" r="10" fill="rgba(7,7,22,0.85)" />
+            <circle cx="50" cy="50" r="5" fill="#df0024" />
+            <!-- Arms -->
+            <line x1="26" y1="26" x2="40" y2="40" stroke="white" stroke-width="5" stroke-linecap="round" />
+            <line x1="74" y1="26" x2="60" y2="40" stroke="white" stroke-width="5" stroke-linecap="round" />
+            <line x1="26" y1="74" x2="40" y2="60" stroke="white" stroke-width="5" stroke-linecap="round" />
+            <line x1="74" y1="74" x2="60" y2="60" stroke="white" stroke-width="5" stroke-linecap="round" />
+            <!-- Motor Hubs -->
+            <circle cx="24" cy="24" r="7" fill="white" />
+            <circle cx="76" cy="24" r="7" fill="white" />
+            <circle cx="24" cy="76" r="7" fill="white" />
+            <circle cx="76" cy="76" r="7" fill="white" />
+            <!-- Spinning Rotor Blades -->
+            <g class="rotor-blade">
+              <ellipse cx="24" cy="24" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+            </g>
+            <g class="rotor-blade">
+              <ellipse cx="76" cy="24" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+            </g>
+            <g class="rotor-blade">
+              <ellipse cx="24" cy="76" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+            </g>
+            <g class="rotor-blade">
+              <ellipse cx="76" cy="76" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Team Gradient Card (Exact Presentation Slide Box) -->
+        <div class="team-gradient-card">
+          <div class="team-member-name">Fahadis Mehmood (58115)</div>
+          <div class="team-member-name">Shawaiz Shahid (58309)</div>
+          <div class="team-member-name">Saim Malik (58391)</div>
+          <div class="team-department">BS Computer Systems</div>
+          <div class="team-supervisor">Prof. Dr. Amir Qayyum</div>
+        </div>
+      </div>
+
+      <!-- Right Drone Live Flight HUD Card -->
+      <div class="hero-drone-hud-card">
+        <img src="drone_preview.jpg" alt="Drone in flight" class="hero-drone-bg" onerror="this.src='pages/drone_preview.jpg'" />
+        
+        <div class="hero-hud-overlay">
+          <div class="hud-header">
+            <div class="hud-title">
+              <span class="status-dot"></span>
+              LIVE TELEMETRY HUD &bull; NODE-01
+            </div>
+            <span style="font-size: 0.8rem; color: #38bdf8; font-family: monospace; font-weight: 700;">
+              GPS: 33.6844° N, 73.0479° E
+            </span>
+          </div>
+
+          <div class="hud-grid">
+            <div class="hud-stat-box">
+              <div class="hud-stat-label">Altitude</div>
+              <div class="hud-stat-value" id="hudAltitude">45.2 m</div>
+            </div>
+            <div class="hud-stat-box">
+              <div class="hud-stat-label">Battery (6S)</div>
+              <div class="hud-stat-value" id="hudBattery">84% &bull; 22.4V</div>
+            </div>
+            <div class="hud-stat-box">
+              <div class="hud-stat-label">Uplink RSSI</div>
+              <div class="hud-stat-value" id="hudRssi">-64 dBm</div>
+            </div>
+            <div class="hud-stat-box">
+              <div class="hud-stat-label">Mesh Peers</div>
+              <div class="hud-stat-value" id="hudPeers">3 Active</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         NAVIGATION TABS
+         ====================================================================== -->
+    <nav class="dashboard-tabs">
+      <button class="tab-btn active" onclick="switchTab('overview')">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+        Overview &amp; Telemetry
+      </button>
+
+      <button class="tab-btn" onclick="switchTab('users')">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h4.216zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/></svg>
+        Connected Users <span class="tab-badge" id="tabUsersBadge">4</span>
+      </button>
+
+      <button class="tab-btn" onclick="switchTab('mesh')">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"/><path d="M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3zm0 8.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+        Other Drones (Mesh) <span class="tab-badge" id="tabDronesBadge">3</span>
+      </button>
+
+      <button class="tab-btn" onclick="switchTab('scanner')">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15.384 6.115a.485.485 0 0 0-.047-.736A12.444 12.444 0 0 0 8 3C5.259 3 2.723 3.882.663 5.379a.485.485 0 0 0-.048.736.518.518 0 0 0 .668.05A11.448 11.448 0 0 1 8 4c.63 0 1.249.05 1.852.148l.854-.854zM8 6c-1.905 0-3.68.56-5.166 1.526a.48.48 0 0 0-.063.745.525.525 0 0 0 .652.065 8.448 8.448 0 0 1 3.51-1.27L8 6z"/></svg>
+        SSID Scanner
+      </button>
+
+      <button class="tab-btn" onclick="switchTab('network')">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm7.5-6.923c-.67.204-1.335.82-1.887 1.855-.143.268-.276.56-.395.872.705.157 1.472.257 2.282.287V1.077zM4.249 4.96c-.25 1.018-.39 2.15-.41 3.34h3.661V5.215c-.947-.024-1.834-.093-2.616-.255zM7.5 9.3V14.92c-.81-.03-1.577-.13-2.282-.287.12-.312.252-.604.395-.872.552-1.035 1.218-1.65 1.887-1.855zm1 5.623V9.3h3.66c-.02 1.19-.16 2.322-.41 3.34-.782.162-1.67.231-2.616.255z"/></svg>
+        AP &amp; STA Config
+      </button>
+
+      <button class="tab-btn" onclick="switchTab('handover')">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/></svg>
+        Replace Drone (Failover)
+      </button>
+
+      <button class="tab-btn" onclick="switchTab('emergency')">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M14 1a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H4.414A2 2 0 0 0 3 11.586l-2 2V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12.793a.5.5 0 0 0 .854.353l2.853-2.853A1 1 0 0 1 4.414 12H14a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/><path d="M7.002 8a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 2.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/></svg>
+        Emergency Message
+      </button>
+    </nav>
+
+    <!-- ======================================================================
+         TAB 1: OVERVIEW & TELEMETRY
+         ====================================================================== -->
+    <div class="tab-pane active" id="pane-overview">
+      <div class="grid-2">
+        <!-- Drone Battery Card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M2 6h10v4H2V6z"/><path d="M2 4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm12 3a1 1 0 0 1 1-1h1v4h-1a1 1 0 0 1-1-1V7z"/></svg>
+                Drone Power &amp; Battery Telemetry
+              </div>
+              <div class="card-subtitle">6S LiPo Intelligent Flight Pack</div>
+            </div>
+            <span class="signal-badge signal-excellent" id="batteryHealthBadge">Healthy</span>
+          </div>
+
+          <div class="battery-visual-box">
+            <div class="battery-meter-container">
+              <svg class="battery-meter-svg" viewBox="0 0 140 140">
+                <circle class="meter-bg" cx="70" cy="70" r="60" />
+                <circle class="meter-bar" id="batterySvgMeter" cx="70" cy="70" r="60" />
+              </svg>
+              <div class="battery-center-text">
+                <div class="battery-pct" id="batteryPct">84%</div>
+                <div class="battery-unit">Remaining</div>
+              </div>
+            </div>
+
+            <div class="battery-stats-list">
+              <div class="battery-stat-row">
+                <span class="battery-stat-label">Total Voltage:</span>
+                <span class="battery-stat-val" id="batteryVoltage">22.4 V</span>
+              </div>
+              <div class="battery-stat-row">
+                <span class="battery-stat-label">Discharge Current:</span>
+                <span class="battery-stat-val" id="batteryCurrent">14.8 A</span>
+              </div>
+              <div class="battery-stat-row">
+                <span class="battery-stat-label">Flight Time Left:</span>
+                <span class="battery-stat-val" style="color: #10b981;" id="batteryFlightTime">26m 40s</span>
+              </div>
+              <div class="battery-stat-row">
+                <span class="battery-stat-label">Pack Temperature:</span>
+                <span class="battery-stat-val" id="batteryTemp">31.8 °C</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6-Cell Individual Voltage Breakdown -->
+          <div class="cell-bars-grid">
+            <div class="cell-bar-item">
+              <div class="cell-bar-track"><div class="cell-bar-fill" id="cell1"></div></div>
+              <div class="cell-label">C1</div>
+              <div class="cell-volt" id="vCell1">3.73V</div>
+            </div>
+            <div class="cell-bar-item">
+              <div class="cell-bar-track"><div class="cell-bar-fill" id="cell2"></div></div>
+              <div class="cell-label">C2</div>
+              <div class="cell-volt" id="vCell2">3.74V</div>
+            </div>
+            <div class="cell-bar-item">
+              <div class="cell-bar-track"><div class="cell-bar-fill" id="cell3"></div></div>
+              <div class="cell-label">C3</div>
+              <div class="cell-volt" id="vCell3">3.73V</div>
+            </div>
+            <div class="cell-bar-item">
+              <div class="cell-bar-track"><div class="cell-bar-fill" id="cell4"></div></div>
+              <div class="cell-label">C4</div>
+              <div class="cell-volt" id="vCell4">3.72V</div>
+            </div>
+            <div class="cell-bar-item">
+              <div class="cell-bar-track"><div class="cell-bar-fill" id="cell5"></div></div>
+              <div class="cell-label">C5</div>
+              <div class="cell-volt" id="vCell5">3.74V</div>
+            </div>
+            <div class="cell-bar-item">
+              <div class="cell-bar-track"><div class="cell-bar-fill" id="cell6"></div></div>
+              <div class="cell-label">C6</div>
+              <div class="cell-volt" id="vCell6">3.74V</div>
+            </div>
+          </div>
+
+          <!-- Battery Simulation Controls -->
+          <div class="sim-controls">
+            <button class="btn btn-secondary" style="font-size: 0.76rem;" onclick="simulateBatteryLevel(84)">Set Normal (84%)</button>
+            <button class="btn btn-secondary" style="font-size: 0.76rem;" onclick="simulateBatteryLevel(35)">Set Warning (35%)</button>
+            <button class="btn btn-danger" style="font-size: 0.76rem;" onclick="simulateBatteryLevel(14)">Simulate Low Battery (14%)</button>
+          </div>
+        </div>
+
+        <!-- Bandwidth & Network Throughput Card -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 11.5a.5.5 0 0 0 .5.5h11.793l-3.147 3.146a.5.5 0 0 0 .708.708l4-4a.5.5 0 0 0 0-.708l-4-4a.5.5 0 0 0-.708.708L13.293 11H1.5a.5.5 0 0 0-.5.5zm14-7a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 4H14.5a.5.5 0 0 1 .5.5z"/></svg>
+                Live AdHoc Bandwidth Monitor
+              </div>
+              <div class="card-subtitle">Real-Time Routing &amp; Client Throughput</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span style="font-size: 0.78rem; color: #10b981; font-weight: 700;">&bull; RX (Down)</span>
+              <span style="font-size: 0.78rem; color: #06b6d4; font-weight: 700;">&bull; TX (Up)</span>
+            </div>
+          </div>
+
+          <div class="bandwidth-canvas-wrapper">
+            <canvas id="bandwidthChart"></canvas>
+          </div>
+
+          <div class="speed-metrics-row">
+            <div class="speed-metric-card">
+              <div class="speed-label">Download (RX)</div>
+              <div class="speed-val" style="color: #10b981;" id="speedRx">24.2 Mbps</div>
+            </div>
+            <div class="speed-metric-card">
+              <div class="speed-label">Upload (TX)</div>
+              <div class="speed-val" style="color: #06b6d4;" id="speedTx">8.7 Mbps</div>
+            </div>
+            <div class="speed-metric-card">
+              <div class="speed-label">AdHoc Ping</div>
+              <div class="speed-val" id="metricPing">18 ms</div>
+            </div>
+            <div class="speed-metric-card">
+              <div class="speed-label">Packet Loss</div>
+              <div class="speed-val" style="color: #10b981;" id="metricLoss">0.1 %</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         TAB 2: CONNECTED USERS
+         ====================================================================== -->
+    <div class="tab-pane" id="pane-users">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Connected Users &amp; Ground Terminals</div>
+            <div class="card-subtitle">Active clients authenticated on Drone-01 Access Point</div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" class="form-control" style="width: 220px; padding: 6px 12px; font-size: 0.82rem;" placeholder="Search IP, MAC, name..." id="userSearchInput" onkeyup="filterUsers()" />
+            <button class="btn btn-secondary" onclick="simulateNewClient()">+ Add Demo User</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table" id="usersTable">
+            <thead>
+              <tr>
+                <th>Device Name</th>
+                <th>IP Address</th>
+                <th>MAC Address</th>
+                <th>Signal (RSSI)</th>
+                <th>Duration</th>
+                <th>Data RX / TX</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         TAB 3: OTHER DRONES (ADHOC MESH)
+         ====================================================================== -->
+    <div class="tab-pane" id="pane-mesh">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">AdHoc Drone Mesh Topology Radar</div>
+              <div class="card-subtitle">Real-time spatial visualization of peer nodes</div>
+            </div>
+            <button class="btn btn-secondary" style="font-size: 0.78rem;" onclick="triggerMeshPing()">Ping All Peers</button>
+          </div>
+
+          <div class="radar-wrapper">
+            <canvas id="radarCanvas"></canvas>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">
+            Center: <strong>ESP32-DAHN-01 (This Node)</strong> &bull; Sweep Radius: 1.5 km
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Peer Drones Status</div>
+              <div class="card-subtitle">Mesh routing and link quality metrics</div>
+            </div>
+            <span class="signal-badge signal-excellent">3 Online</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 14px;" id="peerDronesList">
+            <!-- Peer Cards -->
+            <div class="peer-drone-card">
+              <div class="peer-header">
+                <div class="peer-id">
+                  <span class="status-dot"></span>
+                  Drone-02 (Beta) &bull; Gateway Node
+                </div>
+                <span class="signal-badge signal-excellent">-58 dBm</span>
+              </div>
+              <div class="peer-metrics">
+                <div class="peer-metric-box">Distance: <strong>320m</strong></div>
+                <div class="peer-metric-box">Hops: <strong>1</strong></div>
+                <div class="peer-metric-box">LQ: <strong>98%</strong></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
+                <span>Backhaul: Starlink Uplink active</span>
+                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 4px 8px;" onclick="showToast('Ping Drone-02: 12ms RTT')">Ping</button>
+              </div>
+            </div>
+
+            <div class="peer-drone-card">
+              <div class="peer-header">
+                <div class="peer-id">
+                  <span class="status-dot"></span>
+                  Drone-03 (Gamma) &bull; Forward Recon
+                </div>
+                <span class="signal-badge signal-good">-72 dBm</span>
+              </div>
+              <div class="peer-metrics">
+                <div class="peer-metric-box">Distance: <strong>740m</strong></div>
+                <div class="peer-metric-box">Hops: <strong>2</strong></div>
+                <div class="peer-metric-box">LQ: <strong>86%</strong></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
+                <span>Payload: FLIR Thermal Sensor</span>
+                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 4px 8px;" onclick="showToast('Ping Drone-03: 24ms RTT')">Ping</button>
+              </div>
+            </div>
+
+            <div class="peer-drone-card" style="border-color: rgba(16, 185, 129, 0.4);">
+              <div class="peer-header">
+                <div class="peer-id">
+                  <span class="status-dot"></span>
+                  Drone-04 (Delta) &bull; Standby Base
+                </div>
+                <span class="signal-badge signal-good">Standby</span>
+              </div>
+              <div class="peer-metrics">
+                <div class="peer-metric-box">Base Pad: <strong>1.1 km</strong></div>
+                <div class="peer-metric-box">Battery: <strong>100%</strong></div>
+                <div class="peer-metric-box">Role: <strong>Failover</strong></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
+                <span>Ready for Failover / Handover</span>
+                <button class="btn btn-gradient" style="font-size: 0.72rem; padding: 4px 8px;" onclick="switchTab('handover')">Select for Handover</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         TAB 4: SSID SCANNER
+         ====================================================================== -->
+    <div class="tab-pane" id="pane-scanner">
+      <div class="card">
+        <div class="scan-action-bar">
+          <div>
+            <div class="card-title">Airborne WiFi Network Scanner</div>
+            <div class="card-subtitle">Scan for base stations, gateways, and mesh nodes</div>
+          </div>
+          <button class="btn btn-gradient" id="btnScanNow" onclick="startSsidScan()">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/></svg>
+            Scan Nearby Networks
+          </button>
+        </div>
+
+        <div id="scanProgressBox" style="display: none; margin: 16px 0;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
+            <span>Scanning 2.4 GHz channels 1 through 13...</span>
+            <span id="scanPercentLabel">45%</span>
+          </div>
+          <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 9999px; overflow: hidden;">
+            <div id="scanProgressBar" style="width: 45%; height: 100%; background: var(--brand-gradient); transition: width 0.2s ease;"></div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>SSID (Network Name)</th>
+                <th>BSSID (MAC)</th>
+                <th>Channel</th>
+                <th>Signal (dBm)</th>
+                <th>Quality</th>
+                <th>Security</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="scanResultsBody">
+              <!-- Scan rows populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         TAB 5: AP & STA CONFIGURATION
+         ====================================================================== -->
+    <div class="tab-pane" id="pane-network">
+      <div class="grid-2">
+        <!-- AP (Access Point) Settings -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">AP Settings (Drone Hotspot)</div>
+              <div class="card-subtitle">Broadcast network for ground users</div>
+            </div>
+            <span class="signal-badge signal-excellent">Active</span>
+          </div>
+
+          <form id="apForm" onsubmit="saveApSettings(event)">
+            <div class="form-group">
+              <label class="form-label" for="ap_ssid">Drone AP SSID</label>
+              <input type="text" class="form-control" id="ap_ssid" maxlength="32" value="DroneNet-DAHN-01" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="ap_password">AP Password</label>
+              <div class="input-with-action">
+                <input type="password" class="form-control" id="ap_password" maxlength="64" value="dronerouter123" />
+                <button type="button" class="btn btn-secondary" onclick="togglePassVisibility('ap_password')">👁️</button>
+              </div>
+              <small style="color: var(--text-dim); font-size: 0.75rem;">Leave under 8 characters for an open network.</small>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="ap_channel">WiFi Channel</label>
+                <select class="form-control" id="ap_channel">
+                  <option value="1">Channel 1 (2.412 GHz)</option>
+                  <option value="6" selected>Channel 6 (2.437 GHz)</option>
+                  <option value="11">Channel 11 (2.462 GHz)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="ap_max_clients">Max Clients</label>
+                <input type="number" class="form-control" id="ap_max_clients" min="1" max="16" value="8" />
+              </div>
+            </div>
+
+            <div class="toggle-switch-group">
+              <div>
+                <div style="font-weight: 600; font-size: 0.88rem;">Hide SSID</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">Do not broadcast SSID in beacon frames</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="ssid_hidden" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="ap_ip">AP Gateway Subnet</label>
+              <input type="text" class="form-control" id="ap_ip" value="192.168.4.1" />
+            </div>
+
+            <button type="submit" class="btn btn-gradient" style="width: 100%;">
+              Apply AP Settings &amp; Restart Hotspot
+            </button>
+          </form>
+        </div>
+
+        <!-- STA (Station / Uplink) Settings -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">STA Settings (Uplink Backhaul)</div>
+              <div class="card-subtitle">Connect to upstream router, base, or satellite</div>
+            </div>
+            <span class="signal-badge signal-good" id="staStatusBadge">Connected (-64 dBm)</span>
+          </div>
+
+          <form id="staForm" onsubmit="saveStaSettings(event)">
+            <div class="form-group">
+              <label class="form-label" for="sta_ssid">Uplink SSID</label>
+              <div class="input-with-action">
+                <input type="text" class="form-control" id="sta_ssid" maxlength="32" value="FieldHQ-Base-5G" required />
+                <button type="button" class="btn btn-secondary" onclick="switchTab('scanner')">Scan</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="sta_password">Uplink Password</label>
+              <div class="input-with-action">
+                <input type="password" class="form-control" id="sta_password" maxlength="64" value="basehqpassword" />
+                <button type="button" class="btn btn-secondary" onclick="togglePassVisibility('sta_password')">👁️</button>
+              </div>
+            </div>
+
+            <div class="toggle-switch-group">
+              <div>
+                <div style="font-weight: 600; font-size: 0.88rem;">WPA2 Enterprise Mode</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">802.1X PEAP / MSCHAPv2 / EAP-TLS</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="wpa2_enterprise" onchange="toggleWpa2Fields()" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div id="wpa2EnterpriseFields" style="display: none; padding: 12px; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm); margin-bottom: 16px;">
+              <div class="form-group">
+                <label class="form-label" for="sta_identity">Identity</label>
+                <input type="text" class="form-control" id="sta_identity" placeholder="user@domain" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="sta_user">Username</label>
+                <input type="text" class="form-control" id="sta_user" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="sta_cer">CA Certificate (PEM)</label>
+                <textarea class="form-control" id="sta_cer" rows="3" placeholder="-----BEGIN CERTIFICATE-----"></textarea>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Uplink IP Configuration</label>
+              <div style="display: flex; gap: 16px; margin-top: 6px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 0.88rem;">
+                  <input type="radio" name="ip_mode" value="dhcp" checked /> DHCP (Auto)
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 0.88rem;">
+                  <input type="radio" name="ip_mode" value="static" /> Static IP
+                </label>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <button type="submit" class="btn btn-gradient" style="flex: 1;">
+                Connect to Uplink Network
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="disconnectSta()">
+                Disconnect
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         TAB 6: REPLACE DRONE (AUTONOMOUS FAILOVER)
+         ====================================================================== -->
+    <div class="tab-pane" id="pane-handover">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Autonomous Drone Replacement &amp; Failover Routine</div>
+            <div class="card-subtitle">Zero-downtime mesh handover when current drone battery is depleted</div>
+          </div>
+          <span class="signal-badge signal-excellent">System Ready</span>
+        </div>
+
+        <div class="handover-wizard">
+          <div class="handover-steps-bar">
+            <div class="step-item completed" id="step1">
+              <div class="step-bubble">✓</div>
+              <div class="step-label">Select Drone</div>
+            </div>
+            <div class="step-item active" id="step2">
+              <div class="step-bubble">2</div>
+              <div class="step-label">Mesh Link</div>
+            </div>
+            <div class="step-item" id="step3">
+              <div class="step-bubble">3</div>
+              <div class="step-label">Sync Leases</div>
+            </div>
+            <div class="step-item" id="step4">
+              <div class="step-bubble">4</div>
+              <div class="step-label">BSSID Clone</div>
+            </div>
+            <div class="step-item" id="step5">
+              <div class="step-bubble">5</div>
+              <div class="step-label">Return Home</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div>
+              <div class="form-group">
+                <label class="form-label" for="replacementDroneSelect">Target Replacement Drone</label>
+                <select class="form-control" id="replacementDroneSelect">
+                  <option value="drone-04" selected>Drone-04 (Delta) &bull; Pad 1 &bull; 100% Battery &bull; Standby</option>
+                  <option value="drone-05">Drone-05 (Echo) &bull; Pad 2 &bull; 95% Battery &bull; Standby</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Handover Strategy</label>
+                <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                  1. Standby drone navigates to target coordinate (33.6844° N, 73.0479° E, 45m).<br />
+                  2. Copies active NAT routing table and DHCP client lease mappings.<br />
+                  3. Synchronizes MAC/BSSID so clients transition without re-authenticating.<br />
+                  4. Current Drone-01 executes autonomous Return-to-Home (RTH) for recharge.
+                </div>
+              </div>
+
+              <button class="btn btn-gradient" id="btnStartHandover" onclick="startHandoverSequence()" style="width: 100%; padding: 12px;">
+                🚀 Initiate Autonomous Replacement Routine
+              </button>
+            </div>
+
+            <div>
+              <label class="form-label">Autonomous Handover Terminal Log</label>
+              <div class="handover-log-box" id="handoverTerminalLog">
+                [00:00:00] STANDBY: Replacement drone Drone-04 armed on pad.<br />
+                [00:00:01] MESH: Inter-drone encryption key verified (SHA256).<br />
+                [00:00:02] READY: Awaiting trigger to commence replacement routine.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         TAB 7: EMERGENCY MESSAGE SYSTEM
+         ====================================================================== -->
+    <div class="tab-pane" id="pane-emergency">
+      <div class="card emergency-panel">
+        <div class="card-header">
+          <div>
+            <div class="card-title">AdHoc Emergency Message &amp; SOS Beacon Console</div>
+            <div class="card-subtitle">Broadcast priority alerts to all connected ground clients &amp; mesh drones</div>
+          </div>
+          <span class="signal-badge signal-weak" style="background: rgba(220,38,38,0.2); color: #ef4444;">PRIORITY OVERRIDE</span>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label class="form-label">Select Urgency Level</label>
+            <div class="urgency-selector">
+              <div class="urgency-btn selected-critical" id="urgCritical" onclick="selectUrgency('critical')">
+                🔴 CRITICAL (SOS)
+              </div>
+              <div class="urgency-btn" id="urgWarning" onclick="selectUrgency('warning')">
+                🟡 WARNING
+              </div>
+              <div class="urgency-btn" id="urgInfo" onclick="selectUrgency('info')">
+                🔵 ADVISORY
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="targetAudience">Target Audience</label>
+              <select class="form-control" id="targetAudience">
+                <option value="all" selected>All Connected Ground Users &amp; Mesh Drones (Broadcast)</option>
+                <option value="users">Ground Client Terminals Only</option>
+                <option value="drones">Drone Mesh Relay Peers Only</option>
+                <option value="base">Base Command Station Only</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="emergencyMessageInput">Message Content</label>
+              <textarea class="form-control" id="emergencyMessageInput" rows="4" maxlength="256" placeholder="Enter emergency text or select template below...">EVACUATION NOTICE: Forest fire approaching from Sector 4. Proceed to Evacuation Point Charlie immediately.</textarea>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" style="font-size: 0.74rem;" onclick="setEmergencyTemplate('fire')">Template: Fire Evac</button>
+              <button class="btn btn-secondary" style="font-size: 0.74rem;" onclick="setEmergencyTemplate('weather')">Template: Severe Weather</button>
+              <button class="btn btn-secondary" style="font-size: 0.74rem;" onclick="setEmergencyTemplate('lowalt')">Template: Low Altitude Move</button>
+            </div>
+
+            <div class="toggle-switch-group">
+              <div>
+                <div style="font-weight: 600; font-size: 0.88rem;">Trigger Audible Drone Siren / Client Audio Beep</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">Uses Web Audio API synthesizer for acoustic alert</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="audioAlertToggle" checked />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <button class="btn btn-danger" style="width: 100%; padding: 12px; font-weight: 700; font-size: 1rem;" onclick="dispatchEmergencyMessage()">
+              📢 Broadcast Emergency Alert Now
+            </button>
+          </div>
+
+          <div>
+            <label class="form-label">Broadcast History &amp; Acknowledgement Log</label>
+            <div style="display: flex; flex-direction: column; gap: 10px;" id="emergencyHistoryLog">
+              <div style="padding: 12px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); font-size: 0.82rem;">
+                <div style="display: flex; justify-content: space-between; font-weight: 700; color: #ef4444; margin-bottom: 4px;">
+                  <span>[CRITICAL] Initial Beacon Active</span>
+                  <span>10 mins ago</span>
+                </div>
+                <div>EVACUATION NOTICE: AdHoc mesh relay active. Ground teams proceed to Rally Point Delta.</div>
+                <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 4px;">Delivered to: 4 Clients, 3 Drones &bull; 4 ACKs</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========================================================================
+       TOAST CONTAINER
+       ======================================================================== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ========================================================================
+       JAVASCRIPT LOGIC
+       ======================================================================== -->
+  <script>
+    /* --------------------------------------------------------------------------
+       THEME CONTROLLER
+       -------------------------------------------------------------------------- */
+    function initTheme() {
+      const savedTheme = localStorage.getItem("dahn_theme") || "dark";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      updateThemeToggleBtn(savedTheme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      localStorage.setItem("dahn_theme", next);
+      updateThemeToggleBtn(next);
+      drawBandwidthChart();
+      drawRadar();
+    }
+
+    function updateThemeToggleBtn(theme) {
+      const btn = document.getElementById("themeToggleBtn");
+      if (btn) {
+        btn.textContent = theme === "dark" ? "🌙" : "☀️";
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       TAB CONTROLLER
+       -------------------------------------------------------------------------- */
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+
+      const targetPane = document.getElementById("pane-" + tabId);
+      if (targetPane) targetPane.classList.add("active");
+
+      const btn = Array.from(document.querySelectorAll(".tab-btn")).find(b => b.getAttribute("onclick").includes(tabId));
+      if (btn) btn.classList.add("active");
+
+      if (tabId === "overview") drawBandwidthChart();
+      if (tabId === "mesh") drawRadar();
+    }
+
+    /* --------------------------------------------------------------------------
+       TOAST NOTIFICATIONS
+       -------------------------------------------------------------------------- */
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      const icon = type === "danger" ? "⚠️" : type === "success" ? "✅" : "ℹ️";
+      toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(100%)";
+        toast.style.transition = "all 0.3s ease";
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    /* --------------------------------------------------------------------------
+       PASSWORD TOGGLE HELPER
+       -------------------------------------------------------------------------- */
+    function togglePassVisibility(inputId) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.type = input.type === "password" ? "text" : "password";
+    }
+
+    function toggleWpa2Fields() {
+      const checked = document.getElementById("wpa2_enterprise").checked;
+      document.getElementById("wpa2EnterpriseFields").style.display = checked ? "block" : "none";
+    }
+
+    /* --------------------------------------------------------------------------
+       1. DRONE BATTERY WORKFLOW
+       -------------------------------------------------------------------------- */
+    let currentBattery = 84;
+    function updateBatteryDisplay(pct) {
+      currentBattery = pct;
+      const pctEl = document.getElementById("batteryPct");
+      const hudEl = document.getElementById("hudBattery");
+      const meter = document.getElementById("batterySvgMeter");
+      const badge = document.getElementById("batteryHealthBadge");
+      const voltEl = document.getElementById("batteryVoltage");
+      const timeEl = document.getElementById("batteryFlightTime");
+
+      pctEl.textContent = pct + "%";
+      const totalVolts = (18.0 + (pct / 100) * 4.8).toFixed(1);
+      voltEl.textContent = totalVolts + " V";
+      hudEl.textContent = pct + "% • " + totalVolts + "V";
+
+      const minutes = Math.floor((pct / 100) * 32);
+      const seconds = Math.floor(((pct / 100) * 32 * 60) % 60);
+      timeEl.textContent = `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
+
+      // SVG Stroke dash calculation (circumference = 2 * PI * 60 ≈ 377)
+      const circumference = 377;
+      const offset = circumference - (pct / 100) * circumference;
+      meter.style.strokeDashoffset = offset;
+
+      if (pct > 50) {
+        meter.style.stroke = "#10b981";
+        badge.className = "signal-badge signal-excellent";
+        badge.textContent = "Optimal";
+      } else if (pct > 20) {
+        meter.style.stroke = "#f59e0b";
+        badge.className = "signal-badge signal-fair";
+        badge.textContent = "Moderate";
+      } else {
+        meter.style.stroke = "#ef4444";
+        badge.className = "signal-badge signal-weak";
+        badge.textContent = "LOW WARNING";
+      }
+
+      // Update individual cell bars
+      const cellVolt = (totalVolts / 6).toFixed(2);
+      for (let i = 1; i <= 6; i++) {
+        const bar = document.getElementById("cell" + i);
+        const lbl = document.getElementById("vCell" + i);
+        if (bar && lbl) {
+          bar.style.height = pct + "%";
+          bar.style.background = pct > 20 ? "#10b981" : "#ef4444";
+          lbl.textContent = cellVolt + "V";
+        }
+      }
+    }
+
+    function simulateBatteryLevel(target) {
+      updateBatteryDisplay(target);
+      if (target <= 20) {
+        showToast("CRITICAL: Drone battery low (" + target + "%). Replacement Handover recommended!", "danger");
+      } else {
+        showToast("Simulated battery set to " + target + "%", "success");
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       2. BANDWIDTH CHART & TELEMETRY STREAM
+       -------------------------------------------------------------------------- */
+    const rxHistory = [18, 20, 22, 25, 24, 28, 26, 22, 27, 24, 29, 31, 28, 25, 27];
+    const txHistory = [6, 8, 7, 9, 8, 10, 9, 8, 11, 9, 10, 12, 10, 9, 11];
+
+    function drawBandwidthChart() {
+      const canvas = document.getElementById("bandwidthChart");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid Lines
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.lineWidth = 1;
+      for (let y = 30; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Draw series
+      function drawSeries(data, strokeColor, fillColor) {
+        ctx.beginPath();
+        const maxVal = 40;
+        const step = w / (data.length - 1);
+        data.forEach((val, i) => {
+          const x = i * step;
+          const y = h - (val / maxVal) * (h - 20) - 10;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+
+        // Fill under curve
+        ctx.lineTo(w, h);
+        ctx.lineTo(0, h);
+        ctx.closePath();
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+
+        // Stroke line
+        ctx.beginPath();
+        data.forEach((val, i) => {
+          const x = i * step;
+          const y = h - (val / maxVal) * (h - 20) - 10;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+
+      drawSeries(rxHistory, "#10b981", "rgba(16, 185, 129, 0.15)");
+      drawSeries(txHistory, "#06b6d4", "rgba(6, 182, 212, 0.12)");
+    }
+
+    /* --------------------------------------------------------------------------
+       3. CONNECTED USERS
+       -------------------------------------------------------------------------- */
+    let usersList = [
+      { name: "Rescue-Command-Tablet-01", ip: "192.168.4.2", mac: "84:CC:A8:12:90:F1", rssi: -48, duration: "42m 10s", rx: "312 MB", tx: "48 MB" },
+      { name: "Field-Operator-Phone", ip: "192.168.4.3", mac: "40:4E:36:7E:11:AB", rssi: -56, duration: "28m 05s", rx: "184 MB", tx: "22 MB" },
+      { name: "SearchTeam-Alpha-Radio", ip: "192.168.4.4", mac: "E8:DB:84:99:A2:33", rssi: -65, duration: "1h 14m", rx: "620 MB", tx: "140 MB" },
+      { name: "Thermal-Sensor-Hub", ip: "192.168.4.5", mac: "30:AE:A4:05:88:6C", rssi: -60, duration: "55m 30s", rx: "89 MB", tx: "12 MB" }
+    ];
+
+    function renderUsers() {
+      const tbody = document.getElementById("usersTableBody");
+      const badge = document.getElementById("tabUsersBadge");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+      badge.textContent = usersList.length;
+
+      usersList.forEach((user, index) => {
+        const tr = document.createElement("tr");
+        let signalClass = "active";
+        if (user.rssi < -70) signalClass = "active bad";
+        else if (user.rssi < -60) signalClass = "active warn";
+
+        tr.innerHTML = `
+          <td>
+            <div style="display: flex; align-items: center;">
+              <span class="device-icon-box">💻</span>
+              <strong style="font-weight: 600;">${user.name}</strong>
+            </div>
+          </td>
+          <td><code style="color: #38bdf8;">${user.ip}</code></td>
+          <td style="font-family: monospace; color: var(--text-dim);">${user.mac}</td>
+          <td>
+            <div style="display: flex; align-items: center;">
+              <div class="rssi-bars">
+                <span class="rssi-bar ${signalClass}"></span>
+                <span class="rssi-bar ${signalClass}"></span>
+                <span class="rssi-bar ${signalClass}"></span>
+                <span class="rssi-bar ${user.rssi > -60 ? signalClass : ''}"></span>
+              </div>
+              <span>${user.rssi} dBm</span>
+            </div>
+          </td>
+          <td>${user.duration}</td>
+          <td>↓ ${user.rx} / ↑ ${user.tx}</td>
+          <td>
+            <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 4px 8px;" onclick="kickUser(${index})">Disconnect</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function kickUser(index) {
+      const removed = usersList.splice(index, 1)[0];
+      renderUsers();
+      showToast(`Disconnected user ${removed.name} (${removed.ip})`, "success");
+    }
+
+    function simulateNewClient() {
+      const id = usersList.length + 2;
+      usersList.push({
+        name: `Ground-Unit-${id}`,
+        ip: `192.168.4.${id + 5}`,
+        mac: `B0:95:75:${Math.floor(Math.random() * 89 + 10)}:${Math.floor(Math.random() * 89 + 10)}:${Math.floor(Math.random() * 89 + 10)}`,
+        rssi: -52 - Math.floor(Math.random() * 15),
+        duration: "0m 02s",
+        rx: "1.2 MB",
+        tx: "0.4 MB"
+      });
+      renderUsers();
+      showToast("New client connected to Drone AP", "info");
+    }
+
+    function filterUsers() {
+      const filter = document.getElementById("userSearchInput").value.toLowerCase();
+      const rows = document.querySelectorAll("#usersTableBody tr");
+      rows.forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(filter) ? "" : "none";
+      });
+    }
+
+    /* --------------------------------------------------------------------------
+       4. OTHER DRONES (ADHOC MESH & RADAR)
+       -------------------------------------------------------------------------- */
+    let radarAngle = 0;
+    const meshDrones = [
+      { id: "Drone-01", label: "This Node", x: 0, y: 0, color: "#df0024", role: "Master Relay" },
+      { id: "Drone-02", label: "Beta (Gateway)", x: 80, y: -70, color: "#10b981", role: "Starlink Uplink" },
+      { id: "Drone-03", label: "Gamma (Recon)", x: -110, y: 90, color: "#06b6d4", role: "Forward Scout" },
+      { id: "Drone-04", label: "Delta (Base)", x: 130, y: 110, color: "#f59e0b", role: "Standby Pad" }
+    ];
+
+    function drawRadar() {
+      const canvas = document.getElementById("radarCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const radius = Math.min(cx, cy) - 20;
+
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      // Radar Concentric Circles
+      ctx.strokeStyle = "rgba(6, 182, 212, 0.2)";
+      ctx.lineWidth = 1;
+      for (let r = 40; r <= radius; r += 40) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Radar Crosshairs
+      ctx.beginPath();
+      ctx.moveTo(cx - radius, cy);
+      ctx.lineTo(cx + radius, cy);
+      ctx.moveTo(cx, cy - radius);
+      ctx.lineTo(cx, cy + radius);
+      ctx.stroke();
+
+      // Rotating Sweep Beam
+      const sweepX = cx + Math.cos(radarAngle) * radius;
+      const sweepY = cy + Math.sin(radarAngle) * radius;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, radius, radarAngle - 0.4, radarAngle);
+      ctx.fillStyle = "rgba(6, 182, 212, 0.12)";
+      ctx.fill();
+
+      // Draw Mesh Links
+      ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
+      ctx.setLineDash([4, 4]);
+      meshDrones.forEach(d => {
+        if (d.id !== "Drone-01") {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + d.x, cy + d.y);
+          ctx.stroke();
+        }
+      });
+      ctx.setLineDash([]);
+
+      // Draw Drone Blips
+      meshDrones.forEach(d => {
+        const bx = cx + d.x;
+        const by = cy + d.y;
+
+        ctx.beginPath();
+        ctx.arc(bx, by, 7, 0, Math.PI * 2);
+        ctx.fillStyle = d.color;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(bx, by, 12, 0, Math.PI * 2);
+        ctx.strokeStyle = d.color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "10px sans-serif";
+        ctx.fillText(d.id, bx + 12, by + 4);
+      });
+    }
+
+    function triggerMeshPing() {
+      showToast("Pinging all AdHoc mesh peers... 3/3 responded with < 25ms RTT", "success");
+    }
+
+    /* --------------------------------------------------------------------------
+       5. SSID SCAN (WIFI SCANNER)
+       -------------------------------------------------------------------------- */
+    const sampleNetworks = [
+      { ssid: "FieldHQ-Base-5G", bssid: "E4:8D:8C:30:11:00", ch: 6, rssi: -58, sec: "WPA2-PSK" },
+      { ssid: "DroneRelay-Beta-Uplink", bssid: "70:03:9F:88:21:BC", ch: 1, rssi: -62, sec: "WPA3-SAE" },
+      { ssid: "Emergency-Ground-Command", bssid: "00:15:6D:99:A2:18", ch: 11, rssi: -68, sec: "WPA2-PSK" },
+      { ssid: "Forestry-Observation-Net", bssid: "18:E8:29:43:AA:50", ch: 6, rssi: -74, sec: "WPA2 Enterprise" },
+      { ssid: "Starlink-Mobile-04", bssid: "AC:84:C6:19:30:84", ch: 3, rssi: -79, sec: "WPA2-PSK" }
+    ];
+
+    function startSsidScan() {
+      const progressBox = document.getElementById("scanProgressBox");
+      const bar = document.getElementById("scanProgressBar");
+      const pct = document.getElementById("scanPercentLabel");
+      const tbody = document.getElementById("scanResultsBody");
+      const btn = document.getElementById("btnScanNow");
+
+      progressBox.style.display = "block";
+      btn.disabled = true;
+      btn.textContent = "Scanning...";
+
+      let currentPct = 0;
+      const interval = setInterval(() => {
+        currentPct += 15;
+        if (currentPct > 100) currentPct = 100;
+        bar.style.width = currentPct + "%";
+        pct.textContent = currentPct + "%";
+
+        if (currentPct >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            progressBox.style.display = "none";
+            btn.disabled = false;
+            btn.textContent = "Scan Nearby Networks";
+            renderScanResults();
+            showToast("Scan finished: 5 networks discovered in range", "success");
+          }, 400);
+        }
+      }, 150);
+    }
+
+    function renderScanResults() {
+      const tbody = document.getElementById("scanResultsBody");
+      if (!tbody) return;
+      tbody.innerHTML = "";
+
+      sampleNetworks.forEach(net => {
+        const tr = document.createElement("tr");
+        let sigClass = "signal-excellent";
+        if (net.rssi < -75) sigClass = "signal-weak";
+        else if (net.rssi < -65) sigClass = "signal-fair";
+        else if (net.rssi < -60) sigClass = "signal-good";
+
+        tr.innerHTML = `
+          <td><strong>${net.ssid}</strong></td>
+          <td style="font-family: monospace; color: var(--text-dim);">${net.bssid}</td>
+          <td>Ch ${net.ch}</td>
+          <td>${net.rssi} dBm</td>
+          <td><span class="signal-badge ${sigClass}">${net.rssi > -65 ? 'Strong' : 'Moderate'}</span></td>
+          <td>${net.sec}</td>
+          <td>
+            <button class="btn btn-secondary" style="font-size: 0.74rem; padding: 4px 10px;" onclick="selectNetworkForSta('${net.ssid}')">Connect to STA</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function selectNetworkForSta(ssid) {
+      document.getElementById("sta_ssid").value = ssid;
+      switchTab("network");
+      showToast(`Selected "${ssid}" for Uplink Station configuration. Enter password and click Connect.`, "info");
+    }
+
+    /* --------------------------------------------------------------------------
+       6 & 7. AP & STA FORMS
+       -------------------------------------------------------------------------- */
+    function saveApSettings(e) {
+      e.preventDefault();
+      const ssid = document.getElementById("ap_ssid").value;
+      showToast(`AP configuration saved! Broadcast SSID set to "${ssid}". Rebooting AP radio...`, "success");
+    }
+
+    function saveStaSettings(e) {
+      e.preventDefault();
+      const ssid = document.getElementById("sta_ssid").value;
+      const badge = document.getElementById("staStatusBadge");
+      badge.textContent = `Connecting to ${ssid}...`;
+      badge.className = "signal-badge signal-fair";
+
+      setTimeout(() => {
+        badge.textContent = `Connected (-62 dBm)`;
+        badge.className = "signal-badge signal-excellent";
+        showToast(`Successfully connected to backhaul network "${ssid}"!`, "success");
+      }, 1200);
+    }
+
+    function disconnectSta() {
+      const badge = document.getElementById("staStatusBadge");
+      badge.textContent = "Disconnected";
+      badge.className = "signal-badge signal-weak";
+      showToast("Uplink Station disconnected.", "info");
+    }
+
+    /* --------------------------------------------------------------------------
+       8. REPLACE DRONE (FAILOVER ROUTINE)
+       -------------------------------------------------------------------------- */
+    function startHandoverSequence() {
+      const btn = document.getElementById("btnStartHandover");
+      const logBox = document.getElementById("handoverTerminalLog");
+      btn.disabled = true;
+      btn.textContent = "Handover in Progress...";
+
+      const log = (msg) => {
+        const time = new Date().toTimeString().split(' ')[0];
+        logBox.innerHTML += `<br />[${time}] ${msg}`;
+        logBox.scrollTop = logBox.scrollHeight;
+      };
+
+      log("START: Standby drone Drone-04 departing Base Pad...");
+      setStep(2, "active");
+
+      setTimeout(() => {
+        log("NAV: Drone-04 approaching coordinate 33.6844° N, 73.0479° E (Altitude 45m).");
+        log("MESH: Inter-drone gigabit point-to-point link established.");
+        setStep(2, "completed");
+        setStep(3, "active");
+      }, 2000);
+
+      setTimeout(() => {
+        log("SYNC: 4 active client DHCP leases & ARP tables synchronized.");
+        log("SYNC: NAT session tables transferred (zero packet drop).");
+        setStep(3, "completed");
+        setStep(4, "active");
+      }, 4000);
+
+      setTimeout(() => {
+        log("BSSID: Drone-04 beacon active. Seamless client migration completed.");
+        setStep(4, "completed");
+        setStep(5, "active");
+      }, 6000);
+
+      setTimeout(() => {
+        log("RTH: Autonomous Return-to-Home engaged for Drone-01.");
+        log("SUCCESS: Mission node handover complete. Drone-04 is now Master Relay.");
+        setStep(5, "completed");
+        btn.disabled = false;
+        btn.textContent = "Replacement Completed (Drone-04 Active)";
+        showToast("Autonomous Drone Replacement completed with ZERO client downtime!", "success");
+      }, 8000);
+    }
+
+    function setStep(stepNum, status) {
+      const el = document.getElementById("step" + stepNum);
+      if (!el) return;
+      el.className = "step-item " + status;
+      if (status === "completed") {
+        el.querySelector(".step-bubble").textContent = "✓";
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       9. EMERGENCY MESSAGE SYSTEM
+       -------------------------------------------------------------------------- */
+    let currentUrgency = "critical";
+    function selectUrgency(level) {
+      currentUrgency = level;
+      document.getElementById("urgCritical").className = "urgency-btn" + (level === "critical" ? " selected-critical" : "");
+      document.getElementById("urgWarning").className = "urgency-btn" + (level === "warning" ? " selected-warning" : "");
+      document.getElementById("urgInfo").className = "urgency-btn" + (level === "info" ? " selected-info" : "");
+    }
+
+    function setEmergencyTemplate(type) {
+      const input = document.getElementById("emergencyMessageInput");
+      if (type === "fire") {
+        input.value = "EVACUATION NOTICE: Forest fire approaching from Sector 4. Proceed to Evacuation Point Charlie immediately.";
+        selectUrgency("critical");
+      } else if (type === "weather") {
+        input.value = "WEATHER WARNING: Severe convective storm front within 15km. High wind shear detected. Secure field hardware.";
+        selectUrgency("warning");
+      } else if (type === "lowalt") {
+        input.value = "RELAY NOTICE: Relay drone descending for terrain avoidance. Signal strength may fluctuate for 3 minutes.";
+        selectUrgency("info");
+      }
+    }
+
+    function dispatchEmergencyMessage() {
+      const text = document.getElementById("emergencyMessageInput").value.trim();
+      if (!text) {
+        showToast("Please enter an emergency message.", "danger");
+        return;
+      }
+
+      // Update Banner
+      const banner = document.getElementById("activeEmergencyBanner");
+      const bannerText = document.getElementById("bannerMessageText");
+      const bannerLabel = document.getElementById("bannerUrgencyLabel");
+
+      bannerLabel.textContent = currentUrgency.toUpperCase() + " EMERGENCY BROADCAST";
+      bannerText.textContent = text;
+      banner.style.display = "block";
+
+      // Append to History Log
+      const history = document.getElementById("emergencyHistoryLog");
+      const item = document.createElement("div");
+      item.style.cssText = "padding: 12px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); font-size: 0.82rem;";
+      item.innerHTML = `
+        <div style="display: flex; justify-content: space-between; font-weight: 700; color: ${currentUrgency === 'critical' ? '#ef4444' : currentUrgency === 'warning' ? '#f59e0b' : '#38bdf8'}; margin-bottom: 4px;">
+          <span>[${currentUrgency.toUpperCase()}] Just Now</span>
+          <span>Delivered</span>
+        </div>
+        <div>${text}</div>
+        <div style="font-size: 0.74rem; color: var(--text-dim); margin-top: 4px;">Dispatched to All Connected Clients &amp; AdHoc Drones</div>
+      `;
+      history.prepend(item);
+
+      // Audible Alert using Web Audio API
+      if (document.getElementById("audioAlertToggle").checked) {
+        playEmergencyChirp();
+      }
+
+      showToast(`Emergency alert broadcast to ${usersList.length} users and 3 mesh drones!`, "danger");
+    }
+
+    function dismissEmergencyBanner() {
+      document.getElementById("activeEmergencyBanner").style.display = "none";
+      showToast("Emergency banner acknowledged.", "info");
+    }
+
+    function quickEmergencyModal() {
+      switchTab("emergency");
+      dispatchEmergencyMessage();
+    }
+
+    function playEmergencyChirp() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      } catch (err) {
+        console.warn("Audio context not allowed yet:", err);
+      }
+    }
+
+    /* --------------------------------------------------------------------------
+       PERIODIC SIMULATION TICKER
+       -------------------------------------------------------------------------- */
+    let metSeconds = 6500;
+    setInterval(() => {
+      // Clock
+      metSeconds++;
+      const hrs = Math.floor(metSeconds / 3600);
+      const mins = Math.floor((metSeconds % 3600) / 60);
+      const secs = metSeconds % 60;
+      document.getElementById("metClock").textContent = 
+        `MET: ${hrs < 10 ? '0' : ''}${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+      // Bandwidth fluctuations
+      const nextRx = Math.max(12, Math.min(38, rxHistory[rxHistory.length - 1] + (Math.random() * 8 - 4)));
+      const nextTx = Math.max(4, Math.min(18, txHistory[txHistory.length - 1] + (Math.random() * 4 - 2)));
+      rxHistory.shift();
+      rxHistory.push(Math.round(nextRx));
+      txHistory.shift();
+      txHistory.push(Math.round(nextTx));
+
+      document.getElementById("speedRx").textContent = rxHistory[rxHistory.length - 1] + ".4 Mbps";
+      document.getElementById("speedTx").textContent = txHistory[txHistory.length - 1] + ".1 Mbps";
+      drawBandwidthChart();
+
+      // Radar rotation
+      radarAngle += 0.08;
+      if (radarAngle > Math.PI * 2) radarAngle = 0;
+      drawRadar();
+
+      // Telemetry micro-jitter
+      const alt = (45.0 + Math.sin(metSeconds / 5) * 0.4).toFixed(1);
+      document.getElementById("hudAltitude").textContent = alt + " m";
+    }, 1000);
+
+    /* --------------------------------------------------------------------------
+       ONLOAD INITIALIZATION
+       -------------------------------------------------------------------------- */
+    window.addEventListener("DOMContentLoaded", () => {
+      initTheme();
+      updateBatteryDisplay(84);
+      renderUsers();
+      renderScanResults();
+      drawBandwidthChart();
+      drawRadar();
+    });
+
+    window.addEventListener("resize", () => {
+      drawBandwidthChart();
+      drawRadar();
+    });
+  </script>
+</body>
+</html>
