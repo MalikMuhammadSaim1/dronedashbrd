@@ -1,0 +1,10 @@
+# Build and binary files
+build/
+*.bin
+*.elf
+*.map
+*.o
+*.d
+sdkconfig.old
+.vscode/
+.idea/
