@@ -16,6 +16,7 @@
       --slide-magenta: #b000b5;
       --brand-gradient: linear-gradient(135deg, #100b7e 0%, #df0024 52%, #b000b5 100%);
       --brand-gradient-hover: linear-gradient(135deg, #1a12a8 0%, #fa1238 52%, #c900d0 100%);
+      --team-gradient: linear-gradient(105deg, #100b7e 0%, #100b7e 22%, #df0024 62%, #b000b5 100%);
       
       --accent-cyan: #06b6d4;
       --accent-emerald: #10b981;
@@ -43,6 +44,12 @@
       --text-dim: #64748b;
       --shadow-card: 0 16px 36px rgba(0, 0, 0, 0.45);
       --glass-glow: 0 0 30px rgba(223, 0, 36, 0.15);
+            --drone-icon-body: #ffffff;
+      --drone-icon-inner: rgba(7, 7, 22, 0.85);
+      --drone-icon-arm: #ffffff;
+      --drone-icon-hub: #ffffff;
+      --drone-icon-blade: rgba(255, 255, 255, 0.75);
+      --drone-icon-shadow: drop-shadow(0 4px 14px rgba(255, 255, 255, 0.25));
       --card-highlight: rgba(255, 255, 255, 0.03);
     }
 
@@ -58,6 +65,12 @@
       --text-dim: #94a3b8;
       --shadow-card: 0 12px 30px rgba(15, 23, 42, 0.08);
       --glass-glow: 0 0 30px rgba(16, 11, 126, 0.08);
+            --drone-icon-body: #0f172a;
+      --drone-icon-inner: #f8fafc;
+      --drone-icon-arm: #0f172a;
+      --drone-icon-hub: #0f172a;
+      --drone-icon-blade: rgba(16, 11, 126, 0.7);
+      --drone-icon-shadow: drop-shadow(0 4px 14px rgba(16, 11, 126, 0.25));
       --card-highlight: rgba(255, 255, 255, 0.8);
     }
 
@@ -327,7 +340,29 @@
       width: 82px;
       height: 82px;
       flex-shrink: 0;
-      filter: drop-shadow(0 4px 12px rgba(255, 255, 255, 0.2));
+      filter: var(--drone-icon-shadow);
+      transition: filter 0.3s ease;
+    }
+
+    .drone-svg-body {
+      fill: var(--drone-icon-body);
+      transition: fill 0.3s ease;
+    }
+    .drone-svg-inner {
+      fill: var(--drone-icon-inner);
+      transition: fill 0.3s ease;
+    }
+    .drone-svg-arm {
+      stroke: var(--drone-icon-arm);
+      transition: stroke 0.3s ease;
+    }
+    .drone-svg-hub {
+      fill: var(--drone-icon-hub);
+      transition: fill 0.3s ease;
+    }
+    .drone-svg-blade {
+      fill: var(--drone-icon-blade);
+      transition: fill 0.3s ease;
     }
 
     .rotor-blade {
@@ -340,15 +375,17 @@
       to { transform: rotate(360deg); }
     }
 
-    /* Bottom Left Gradient Team Card (From Screenshot) */
+    /* Bottom Left Gradient Team Card (Cleaned 1px line & Slide Matched) */
     .team-gradient-card {
-      background: var(--brand-gradient);
+      background: var(--team-gradient);
       border-radius: var(--radius-lg);
       padding: 30px 36px;
       color: #ffffff;
-      box-shadow: 0 16px 36px rgba(223, 0, 36, 0.25);
+      box-shadow: 0 16px 36px rgba(16, 11, 126, 0.4), 0 8px 24px rgba(223, 0, 36, 0.15);
       position: relative;
       overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      outline: none;
     }
 
     .team-gradient-card::before {
@@ -358,7 +395,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15), transparent 60%);
+      background: radial-gradient(circle at 85% 20%, rgba(255, 255, 255, 0.15), transparent 60%);
       pointer-events: none;
     }
 
@@ -383,54 +420,271 @@
       opacity: 0.95;
     }
 
-    /* Right Drone Live Flight HUD Card (From Screenshot) */
-    .hero-drone-hud-card {
+    /* ==========================================================================
+       DRONE CAMERA WINDOW & LIVE CAPTURE HUD
+       ========================================================================== */
+    .hero-drone-camera-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-xl);
       overflow: hidden;
       position: relative;
-      min-height: 400px;
       box-shadow: var(--shadow-card);
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
     }
 
-    .hero-drone-bg {
+    .cam-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: rgba(10, 11, 24, 0.92);
+      border-bottom: 1px solid var(--border-color);
+    }
+    [data-theme="light"] .cam-header-bar {
+      background: rgba(241, 245, 249, 0.95);
+    }
+
+    .cam-header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .cam-viewport-container {
+      position: relative;
+      width: 100%;
+      height: 295px;
+      background: #04050c;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cam-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cam-flash-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      transition: transform 0.8s ease;
+      background: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+      transition: opacity 0.3s ease-out;
     }
 
-    .hero-drone-hud-card:hover .hero-drone-bg {
-      transform: scale(1.03);
+    .cam-flash-active {
+      opacity: 0.95;
+      transition: none;
+    }
+
+    .cam-hud-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 4;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px 16px;
+    }
+
+    .cam-hud-top, .cam-hud-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      font-family: monospace;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+
+    .cam-rec-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      backdrop-filter: blur(4px);
+    }
+
+    .cam-rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: pulse-dot 1s infinite;
+    }
+
+    .cam-mode-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #38bdf8;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Tactical Viewfinder Reticle */
+    .cam-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 130px;
+      height: 130px;
+      pointer-events: none;
+    }
+
+    .cam-reticle-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px;
+      height: 22px;
+      border: 1.5px solid rgba(255, 255, 255, 0.75);
+      border-radius: 50%;
+    }
+
+    .cam-reticle-crosshair::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: -10px;
+      right: -10px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.85);
+      transform: translateY(-50%);
+    }
+
+    .cam-reticle-crosshair::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: -10px;
+      bottom: -10px;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.85);
+      transform: translateX(-50%);
+    }
+
+    .cam-reticle-corner {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: rgba(6, 182, 212, 0.9);
+      border-style: solid;
+    }
+    .cam-reticle-corner.tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+    .cam-reticle-corner.tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+    .cam-reticle-corner.bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+    .cam-reticle-corner.br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+    .cam-action-toolbar {
+      display: flex;
+      gap: 12px;
+      padding: 12px 20px;
+      background: var(--bg-surface-elevated);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .btn-cam-capture {
+      background: linear-gradient(135deg, #df0024 0%, #b000b5 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.84rem;
+      box-shadow: 0 4px 12px rgba(223, 0, 36, 0.35);
+      transition: var(--transition);
+    }
+    .btn-cam-capture:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(223, 0, 36, 0.45);
+    }
+
+    .btn-cam-stream {
+      background: rgba(6, 182, 212, 0.12);
+      color: #06b6d4;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      font-weight: 700;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.84rem;
+      transition: var(--transition);
+    }
+    .btn-cam-stream:hover {
+      background: rgba(6, 182, 212, 0.22);
+      transform: translateY(-1px);
+    }
+    .btn-cam-stream.streaming-active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border-color: #10b981;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
     }
 
     .hero-hud-overlay {
       position: relative;
       z-index: 2;
-      background: linear-gradient(180deg, rgba(7, 7, 22, 0.2) 0%, rgba(7, 7, 22, 0.85) 70%, rgba(7, 7, 22, 0.96) 100%);
-      padding: 24px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(180deg, rgba(7, 7, 22, 0.88) 0%, rgba(7, 7, 22, 0.98) 100%);
+      padding: 20px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(8px);
+    }
+    [data-theme="light"] .hero-hud-overlay {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border-top: 1px solid var(--border-color);
     }
 
     .hud-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .hud-title {
-      font-size: 1.15rem;
+      font-size: 1rem;
       font-weight: 700;
-      color: #ffffff;
+      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -449,24 +703,181 @@
     }
 
     .hud-stat-box {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
       border-radius: var(--radius-sm);
-      padding: 10px 14px;
+      padding: 8px 12px;
+    }
+    [data-theme="light"] .hud-stat-box {
+      background: #f1f5f9;
     }
 
     .hud-stat-label {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #cbd5e1;
+      color: var(--text-muted);
     }
 
     .hud-stat-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    /* Fleet Control Specific Styles */
+    .fleet-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .fleet-drone-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: var(--transition);
+    }
+    .fleet-drone-card:hover {
+      border-color: var(--border-highlight);
+      box-shadow: var(--shadow-card);
+    }
+    .fleet-drone-card.critical-battery {
+      border-color: rgba(239, 68, 68, 0.6);
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, var(--bg-surface-elevated) 100%);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+    }
+
+    .fleet-drone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .fleet-drone-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .fleet-battery-meter {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    [data-theme="light"] .fleet-battery-meter {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .fleet-battery-fill {
+      height: 100%;
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    .fleet-specs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+    .fleet-spec-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+    }
+    [data-theme="light"] .fleet-spec-box {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .fleet-spec-val {
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 2px;
+      font-size: 0.82rem;
+    }
+
+    .fleet-card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-box {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 580px;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title {
       font-size: 1.15rem;
       font-weight: 700;
-      color: #ffffff;
-      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.3rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .modal-body {
+      padding: 24px;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.05);
     }
 
     /* ==========================================================================
@@ -1283,57 +1694,167 @@
           <!-- Animated Drone SVG Graphic -->
           <svg class="drone-logo-icon" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- Center Drone Body -->
-            <circle cx="50" cy="50" r="16" fill="white" />
-            <circle cx="50" cy="50" r="10" fill="rgba(7,7,22,0.85)" />
+            <circle class="drone-svg-body" cx="50" cy="50" r="16" />
+            <circle class="drone-svg-inner" cx="50" cy="50" r="10" />
             <circle cx="50" cy="50" r="5" fill="#df0024" />
             <!-- Arms -->
-            <line x1="26" y1="26" x2="40" y2="40" stroke="white" stroke-width="5" stroke-linecap="round" />
-            <line x1="74" y1="26" x2="60" y2="40" stroke="white" stroke-width="5" stroke-linecap="round" />
-            <line x1="26" y1="74" x2="40" y2="60" stroke="white" stroke-width="5" stroke-linecap="round" />
-            <line x1="74" y1="74" x2="60" y2="60" stroke="white" stroke-width="5" stroke-linecap="round" />
+            <line class="drone-svg-arm" x1="26" y1="26" x2="40" y2="40" stroke-width="5" stroke-linecap="round" />
+            <line class="drone-svg-arm" x1="74" y1="26" x2="60" y2="40" stroke-width="5" stroke-linecap="round" />
+            <line class="drone-svg-arm" x1="26" y1="74" x2="40" y2="60" stroke-width="5" stroke-linecap="round" />
+            <line class="drone-svg-arm" x1="74" y1="74" x2="60" y2="60" stroke-width="5" stroke-linecap="round" />
             <!-- Motor Hubs -->
-            <circle cx="24" cy="24" r="7" fill="white" />
-            <circle cx="76" cy="24" r="7" fill="white" />
-            <circle cx="24" cy="76" r="7" fill="white" />
-            <circle cx="76" cy="76" r="7" fill="white" />
+            <circle class="drone-svg-hub" cx="24" cy="24" r="7" />
+            <circle class="drone-svg-hub" cx="76" cy="24" r="7" />
+            <circle class="drone-svg-hub" cx="24" cy="76" r="7" />
+            <circle class="drone-svg-hub" cx="76" cy="76" r="7" />
             <!-- Spinning Rotor Blades -->
             <g class="rotor-blade">
-              <ellipse cx="24" cy="24" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+              <ellipse class="drone-svg-blade" cx="24" cy="24" rx="14" ry="3.5" />
             </g>
             <g class="rotor-blade">
-              <ellipse cx="76" cy="24" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+              <ellipse class="drone-svg-blade" cx="76" cy="24" rx="14" ry="3.5" />
             </g>
             <g class="rotor-blade">
-              <ellipse cx="24" cy="76" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+              <ellipse class="drone-svg-blade" cx="24" cy="76" rx="14" ry="3.5" />
             </g>
             <g class="rotor-blade">
-              <ellipse cx="76" cy="76" rx="14" ry="3.5" fill="rgba(255,255,255,0.7)" />
+              <ellipse class="drone-svg-blade" cx="76" cy="76" rx="14" ry="3.5" />
             </g>
           </svg>
         </div>
 
-        <!-- Team Gradient Card (Exact Presentation Slide Box) -->
-        <div class="team-gradient-card">
-          <div class="team-member-name">Fahadis Mehmood (58115)</div>
-          <div class="team-member-name">Shawaiz Shahid (58309)</div>
-          <div class="team-member-name">Saim Malik (58391)</div>
-          <div class="team-department">BS Computer Systems</div>
-          <div class="team-supervisor">Prof. Dr. Amir Qayyum</div>
+        <!-- Mission Network Operations Intelligence Card -->
+        <div class="team-gradient-card" style="padding: 24px 28px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+              <span class="status-dot" style="background: #ffffff; width: 7px; height: 7px;"></span>
+              MISSION NETWORK CORE &bull; AD-HOC SPECS
+            </div>
+            <span class="signal-badge" style="background: rgba(255, 255, 255, 0.22); color: #ffffff; font-size: 0.68rem; padding: 3px 8px; border: 1px solid rgba(255, 255, 255, 0.35); font-weight: 700;">
+              AIRBORNE CELLULAR BUBBLE
+            </span>
+          </div>
+
+          <!-- Key Operational Specifications 2x2 Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+            <div style="background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm); padding: 8px 12px;">
+              <div style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85;">Routing Protocol</div>
+              <div style="font-size: 0.96rem; font-weight: 700; color: #ffffff; margin-top: 2px;">BATMAN-adv (L2)</div>
+              <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 1px;">Self-Healing Dynamic Mesh</div>
+            </div>
+
+            <div style="background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm); padding: 8px 12px;">
+              <div style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85;">Relay Coverage</div>
+              <div style="font-size: 0.96rem; font-weight: 700; color: #ffffff; margin-top: 2px;">1.5 km² Aerial Zone</div>
+              <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 1px;">Multi-Drone Cluster Relays</div>
+            </div>
+
+            <div style="background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm); padding: 8px 12px;">
+              <div style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85;">Backhaul Gateway</div>
+              <div style="font-size: 0.96rem; font-weight: 700; color: #ffffff; margin-top: 2px;">Starlink Satellite</div>
+              <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 1px;">Autonomous 4G/LTE Fallback</div>
+            </div>
+
+            <div style="background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm); padding: 8px 12px;">
+              <div style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85;">Failover Handover</div>
+              <div style="font-size: 0.96rem; font-weight: 700; color: #ffffff; margin-top: 2px;">Zero Packet Drop</div>
+              <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 1px;">BSSID Cloning &bull; DHCP Sync</div>
+            </div>
+          </div>
+
+          <!-- Bottom Telemetry Badges Strip -->
+          <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.18); font-size: 0.74rem; opacity: 0.92;">
+            <div><span>Radio:</span> <strong>ESP32 802.11b/g/n + NAT</strong></div>
+            <div><span>Security:</span> <strong>WPA2-PSK / AES-128</strong></div>
+            <div><span>MTU:</span> <strong>1500 Bytes</strong></div>
+          </div>
         </div>
       </div>
 
-      <!-- Right Drone Live Flight HUD Card -->
-      <div class="hero-drone-hud-card">
-        <img src="drone_preview.jpg" alt="Drone in flight" class="hero-drone-bg" onerror="this.src='pages/drone_preview.jpg'" />
-        
+      <!-- Right Drone Live Camera Window & Flight HUD -->
+      <div class="hero-drone-camera-card">
+        <!-- Top Camera Header Bar -->
+        <div class="cam-header-bar">
+          <div class="cam-header-title">
+            <span class="status-dot"></span>
+            <span>ONBOARD DRONE CAM &bull; OPTICAL FEED</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <select id="camSourceSelect" class="form-control" style="font-size: 0.76rem; padding: 3px 8px; width: auto;" onchange="switchCamSource(this.value)">
+              <option value="Drone-01" selected>Drone-01 (Alpha - 1080p OV2640)</option>
+              <option value="Drone-02">Drone-02 (Beta - Wide Angle)</option>
+              <option value="Drone-03">Drone-03 (Gamma - Thermal FLIR)</option>
+            </select>
+            <span class="cam-mode-tag" id="camResBadge">STREAM: 320&times;240 (15 FPS)</span>
+          </div>
+        </div>
+
+        <!-- Camera Viewport Window -->
+        <div class="cam-viewport-container">
+          <canvas id="camCanvas" class="cam-canvas"></canvas>
+          <img id="camFallbackImg" src="drone_preview.jpg" alt="Drone Camera View" style="display:none;" onerror="this.src='pages/drone_preview.jpg'" />
+          <div id="camFlashOverlay" class="cam-flash-overlay"></div>
+
+          <!-- Viewfinder HUD Elements -->
+          <div class="cam-hud-overlay">
+            <div class="cam-hud-top">
+              <div class="cam-rec-pill" id="camRecIndicator">
+                <span class="cam-rec-dot"></span>
+                <span id="camRecText">LIVE FEED</span>
+              </div>
+              <div style="font-family: monospace; letter-spacing: 0.05em;" id="camHeadingText">
+                HDG 142&deg; SE &bull; PITCH -12&deg;
+              </div>
+            </div>
+
+            <!-- Tactical Reticle & Corner Brackets -->
+            <div class="cam-reticle">
+              <div class="cam-reticle-corner tl"></div>
+              <div class="cam-reticle-corner tr"></div>
+              <div class="cam-reticle-corner bl"></div>
+              <div class="cam-reticle-corner br"></div>
+              <div class="cam-reticle-crosshair"></div>
+            </div>
+
+            <div class="cam-hud-bottom">
+              <div>ZOOM: 1.0X &bull; FL: 3.6mm &bull; SENSOR: 34.2&deg;C</div>
+              <div id="camGpsTimestamp" style="color: #38bdf8;">GPS: 33.6844&deg; N, 73.0479&deg; E</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Camera Action Buttons Toolbar (2MP Quality & Live Stream) -->
+        <div class="cam-action-toolbar">
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- Button 1: Capture 2MP Quality -->
+            <button type="button" class="btn btn-cam-capture" id="btnCapture2mp" onclick="capture2MpImage()">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/><path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/></svg>
+              <span>Capture Img (2MP Quality)</span>
+              <span class="tab-badge" style="background:rgba(255,255,255,0.22); font-size: 0.68rem;">1600&times;1200</span>
+            </button>
+
+            <!-- Button 2: Live Capturing (Low Res) -->
+            <button type="button" class="btn btn-cam-stream streaming-active" id="btnLiveStream" onclick="toggleLiveStream()">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16" id="streamBtnIcon"><path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/></svg>
+              <span id="streamBtnText">Live Capturing (Low Res)</span>
+              <span class="tab-badge" style="background:rgba(6,182,212,0.2); font-size: 0.68rem;" id="streamBadgeText">320&times;240</span>
+            </button>
+          </div>
+
+          <div style="font-size: 0.76rem; color: var(--text-muted);">
+            OV2640 Lens &bull; F/2.0 Aperture &bull; Auto-Exposure
+          </div>
+        </div>
+
+        <!-- Telemetry Data Overlay -->
         <div class="hero-hud-overlay">
           <div class="hud-header">
             <div class="hud-title">
               <span class="status-dot"></span>
-              LIVE TELEMETRY HUD &bull; NODE-01
+              <span id="activeHudDroneTitle">LIVE TELEMETRY HUD &bull; DRONE-01 (ALPHA)</span>
             </div>
             <span style="font-size: 0.8rem; color: #38bdf8; font-family: monospace; font-weight: 700;">
-              GPS: 33.6844° N, 73.0479° E
+              GPS: 33.6844&deg; N, 73.0479&deg; E
             </span>
           </div>
 
@@ -1373,9 +1894,9 @@
         Connected Users <span class="tab-badge" id="tabUsersBadge">4</span>
       </button>
 
-      <button class="tab-btn" onclick="switchTab('mesh')">
+      <button class="tab-btn" id="tabBtnDrones" onclick="switchTab('drones')">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"/><path d="M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3zm0 8.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
-        Other Drones (Mesh) <span class="tab-badge" id="tabDronesBadge">3</span>
+        Drone Fleet &amp; Control <span class="tab-badge" id="tabDronesBadge">4 Drones</span>
       </button>
 
       <button class="tab-btn" onclick="switchTab('scanner')">
@@ -1571,98 +2092,96 @@
     </div>
 
     <!-- ======================================================================
-         TAB 3: OTHER DRONES (ADHOC MESH)
+         TAB 3: DRONE FLEET COMMAND & MULTI-NODE CONTROL
          ====================================================================== -->
-    <div class="tab-pane" id="pane-mesh">
+    <div class="tab-pane" id="pane-drones">
+      <!-- Fleet Action Bar -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="scan-action-bar">
+          <div>
+            <div class="card-title">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13z"/><path d="M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3zm0 8.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+              AdHoc Drone Fleet Command &amp; Multi-Node Control
+            </div>
+            <div class="card-subtitle">Real-time control over all deployed drones, individual node telemetry, and automated replacement</div>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" onclick="triggerMeshPing()">Ping All Drones</button>
+            <button class="btn btn-gradient" onclick="openAddDroneModal()">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/></svg>
+              + Add Drone
+            </button>
+          </div>
+        </div>
+
+        <!-- Low Battery Warning Banner for Drone-03 -->
+        <div style="margin-top: 16px; padding: 14px 18px; border-radius: var(--radius-sm); background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;" id="fleetBatteryAlertBanner">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 1.5rem;">⚠️</span>
+            <div>
+              <strong style="color: #ef4444; font-size: 0.95rem;">LOW BATTERY ALERT &bull; Drone-03 (Gamma) at 22%</strong>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">
+                Remaining flight time: ~3 mins 45 secs. Standby replacement <strong>Drone-04 (Delta)</strong> is 100% charged and ready on Base Pad 1.
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-gradient" style="background: linear-gradient(135deg, #ef4444, #df0024); font-size: 0.84rem; padding: 8px 16px; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);" onclick="replaceLowBatteryDrone('Drone-03')">
+            🚨 Replace Drone-03 Now
+          </button>
+        </div>
+      </div>
+
       <div class="grid-2">
+        <!-- Left: Interactive Multi-Drone Fleet Cards -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div style="font-weight: 700; font-size: 1.05rem; color: var(--text-main);">Active Drone Fleet Nodes</div>
+            <span class="signal-badge signal-excellent" id="fleetOnlineCountBadge">4 Online Nodes</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 14px;" id="droneFleetCardsContainer">
+            <!-- Dynamically populated via renderDroneFleet() -->
+          </div>
+        </div>
+
+        <!-- Right: Spatial Mesh Radar & Link Topologies -->
         <div class="card">
           <div class="card-header">
             <div>
               <div class="card-title">AdHoc Drone Mesh Topology Radar</div>
-              <div class="card-subtitle">Real-time spatial visualization of peer nodes</div>
+              <div class="card-subtitle">Real-time spatial visualization of peer nodes and relay paths</div>
             </div>
-            <button class="btn btn-secondary" style="font-size: 0.78rem;" onclick="triggerMeshPing()">Ping All Peers</button>
+            <button class="btn btn-secondary" style="font-size: 0.78rem;" onclick="triggerMeshPing()">Scan Spatial Mesh</button>
           </div>
 
           <div class="radar-wrapper">
             <canvas id="radarCanvas"></canvas>
           </div>
-          <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center;">
-            Center: <strong>ESP32-DAHN-01 (This Node)</strong> &bull; Sweep Radius: 1.5 km
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">Peer Drones Status</div>
-              <div class="card-subtitle">Mesh routing and link quality metrics</div>
-            </div>
-            <span class="signal-badge signal-excellent">3 Online</span>
+          <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+            Center: <strong>ESP32-DAHN-01 (This Node)</strong> &bull; Radar Sweep: 1.5 km Radius
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 14px;" id="peerDronesList">
-            <!-- Peer Cards -->
-            <div class="peer-drone-card">
-              <div class="peer-header">
-                <div class="peer-id">
-                  <span class="status-dot"></span>
-                  Drone-02 (Beta) &bull; Gateway Node
-                </div>
-                <span class="signal-badge signal-excellent">-58 dBm</span>
-              </div>
-              <div class="peer-metrics">
-                <div class="peer-metric-box">Distance: <strong>320m</strong></div>
-                <div class="peer-metric-box">Hops: <strong>1</strong></div>
-                <div class="peer-metric-box">LQ: <strong>98%</strong></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
-                <span>Backhaul: Starlink Uplink active</span>
-                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 4px 8px;" onclick="showToast('Ping Drone-02: 12ms RTT')">Ping</button>
-              </div>
+          <!-- Mesh Network Health Stats -->
+          <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: center;">
+            <div class="hud-stat-box">
+              <div class="hud-stat-label">Mesh Latency</div>
+              <div class="hud-stat-value" style="color:#10b981;">14 ms</div>
             </div>
-
-            <div class="peer-drone-card">
-              <div class="peer-header">
-                <div class="peer-id">
-                  <span class="status-dot"></span>
-                  Drone-03 (Gamma) &bull; Forward Recon
-                </div>
-                <span class="signal-badge signal-good">-72 dBm</span>
-              </div>
-              <div class="peer-metrics">
-                <div class="peer-metric-box">Distance: <strong>740m</strong></div>
-                <div class="peer-metric-box">Hops: <strong>2</strong></div>
-                <div class="peer-metric-box">LQ: <strong>86%</strong></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
-                <span>Payload: FLIR Thermal Sensor</span>
-                <button class="btn btn-secondary" style="font-size: 0.72rem; padding: 4px 8px;" onclick="showToast('Ping Drone-03: 24ms RTT')">Ping</button>
-              </div>
+            <div class="hud-stat-box">
+              <div class="hud-stat-label">Routing Protocol</div>
+              <div class="hud-stat-value" style="color:#38bdf8;">BATMAN-adv</div>
             </div>
-
-            <div class="peer-drone-card" style="border-color: rgba(16, 185, 129, 0.4);">
-              <div class="peer-header">
-                <div class="peer-id">
-                  <span class="status-dot"></span>
-                  Drone-04 (Delta) &bull; Standby Base
-                </div>
-                <span class="signal-badge signal-good">Standby</span>
-              </div>
-              <div class="peer-metrics">
-                <div class="peer-metric-box">Base Pad: <strong>1.1 km</strong></div>
-                <div class="peer-metric-box">Battery: <strong>100%</strong></div>
-                <div class="peer-metric-box">Role: <strong>Failover</strong></div>
-              </div>
-              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
-                <span>Ready for Failover / Handover</span>
-                <button class="btn btn-gradient" style="font-size: 0.72rem; padding: 4px 8px;" onclick="switchTab('handover')">Select for Handover</button>
-              </div>
+            <div class="hud-stat-box">
+              <div class="hud-stat-label">Packet Delivery</div>
+              <div class="hud-stat-value" style="color:#10b981;">99.8%</div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Alias for backward compatibility -->
+    <div id="pane-mesh" style="display:none;"></div>
 
     <!-- ======================================================================
          TAB 4: SSID SCANNER
@@ -2014,6 +2533,101 @@
       </div>
     </div>
 
+  <!-- ========================================================================
+       MODAL 1: 2MP HIGH-RESOLUTION CAPTURE VIEWER
+       ======================================================================== -->
+  <div class="modal-overlay" id="snapshotModal">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6z"/></svg>
+          2MP High-Resolution Drone Snapshot
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeSnapshotModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 16px;">
+        <div style="position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border-color); background: #000;">
+          <canvas id="snapshotPreviewCanvas" style="width: 100%; height: auto; max-height: 360px; object-fit: contain; display: block;"></canvas>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px;">
+          <div class="hud-stat-box">
+            <div class="hud-stat-label">Resolution</div>
+            <div class="hud-stat-value" style="font-size: 0.95rem;">1600 &times; 1200 (2MP)</div>
+          </div>
+          <div class="hud-stat-box">
+            <div class="hud-stat-label">Sensor &amp; Lens</div>
+            <div class="hud-stat-value" style="font-size: 0.95rem;">OV2640 UXGA</div>
+          </div>
+          <div class="hud-stat-box">
+            <div class="hud-stat-label">Geotag Coordinates</div>
+            <div class="hud-stat-value" style="font-size: 0.82rem; color: #38bdf8;">33.6844&deg;N, 73.0479&deg;E</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeSnapshotModal()">Close</button>
+        <button type="button" class="btn btn-gradient" onclick="downloadSnapshot()">
+          📥 Download 2MP Image (.JPG)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL 2: REGISTER NEW DRONE TO MESH FLEET
+       ======================================================================== -->
+  <div class="modal-overlay" id="addDroneModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/></svg>
+          Register New Drone to AdHoc Fleet
+        </div>
+        <button type="button" class="modal-close-btn" onclick="closeAddDroneModal()">&times;</button>
+      </div>
+      <form onsubmit="submitAddDrone(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="newDroneCallsign">Drone Callsign / Designation</label>
+            <input type="text" class="form-control" id="newDroneCallsign" placeholder="e.g. Drone-05 (Echo)" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newDroneRole">Operational Role</label>
+            <select class="form-control" id="newDroneRole">
+              <option value="Forward Relay">Forward Mesh Relay</option>
+              <option value="Thermal Recon">Thermal / Surveillance Recon</option>
+              <option value="High-Gain Gateway">High-Gain Starlink Gateway</option>
+              <option value="Hot Standby Backup">Hot Standby Replacement</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label" for="newDroneMac">Hardware MAC Address</label>
+              <input type="text" class="form-control" id="newDroneMac" placeholder="24:6F:28:44:88:E1" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newDroneBattery">Initial Battery (%)</label>
+              <input type="number" class="form-control" id="newDroneBattery" min="10" max="100" value="100" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newDroneDist">Initial Distance / Vector</label>
+            <input type="text" class="form-control" id="newDroneDist" placeholder="e.g. 520m North-West" value="640m North-East" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeAddDroneModal()">Cancel</button>
+          <button type="submit" class="btn btn-gradient">Connect &amp; Pair to Mesh</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   </main>
 
   <!-- ========================================================================
@@ -2055,17 +2669,25 @@
        TAB CONTROLLER
        -------------------------------------------------------------------------- */
     function switchTab(tabId) {
+      if (tabId === "mesh") tabId = "drones";
+
       document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
       document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
 
       const targetPane = document.getElementById("pane-" + tabId);
       if (targetPane) targetPane.classList.add("active");
 
-      const btn = Array.from(document.querySelectorAll(".tab-btn")).find(b => b.getAttribute("onclick").includes(tabId));
+      const btn = Array.from(document.querySelectorAll(".tab-btn")).find(b => {
+        const attr = b.getAttribute("onclick") || "";
+        return attr.includes(tabId) || (tabId === "drones" && attr.includes("mesh"));
+      });
       if (btn) btn.classList.add("active");
 
       if (tabId === "overview") drawBandwidthChart();
-      if (tabId === "mesh") drawRadar();
+      if (tabId === "drones" || tabId === "mesh") {
+        renderDroneFleet();
+        drawRadar();
+      }
     }
 
     /* --------------------------------------------------------------------------
@@ -2316,13 +2938,438 @@
     /* --------------------------------------------------------------------------
        4. OTHER DRONES (ADHOC MESH & RADAR)
        -------------------------------------------------------------------------- */
+    /* --------------------------------------------------------------------------
+       CAMERA CONTROLLER (2MP QUALITY SNAPSHOT & LOW-RES LIVE STREAM)
+       -------------------------------------------------------------------------- */
+    let isLiveStreaming = true;
+    let activeCamDrone = "Drone-01";
+    let camFrameTick = 0;
+    let captured2MpDataUrl = null;
+
+    function initCameraFeed() {
+      const canvas = document.getElementById("camCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const img = document.getElementById("camFallbackImg");
+
+      function renderFrame() {
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          canvas.width = rect.width;
+          canvas.height = rect.height;
+        }
+
+        const w = canvas.width || 320;
+        const h = canvas.height || 240;
+
+        camFrameTick += 0.05;
+
+        // Draw image or simulated aerial view
+        if (img && img.complete && img.naturalWidth > 0) {
+          const shiftX = isLiveStreaming ? Math.sin(camFrameTick * 0.8) * 6 : 0;
+          const shiftY = isLiveStreaming ? Math.cos(camFrameTick * 0.6) * 4 : 0;
+          ctx.drawImage(img, -10 + shiftX, -10 + shiftY, w + 20, h + 20);
+        } else {
+          // Synthetic aerial terrain gradient
+          const grad = ctx.createLinearGradient(0, 0, w, h);
+          grad.addColorStop(0, "#1e293b");
+          grad.addColorStop(0.5, "#0f172a");
+          grad.addColorStop(1, "#020617");
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, w, h);
+        }
+
+        // Thermal FLIR effect if Drone-03 is selected
+        if (activeCamDrone === "Drone-03") {
+          ctx.fillStyle = "rgba(223, 0, 36, 0.25)";
+          ctx.fillRect(0, 0, w, h);
+          ctx.fillStyle = "rgba(245, 158, 11, 0.15)";
+          ctx.beginPath();
+          ctx.arc(w / 2 + Math.sin(camFrameTick) * 20, h / 2, 60, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Live stream scanlines (simulates low-latency telemetry transmission)
+        if (isLiveStreaming) {
+          ctx.fillStyle = "rgba(0, 0, 0, 0.12)";
+          for (let y = 0; y < h; y += 4) {
+            ctx.fillRect(0, y, w, 1.5);
+          }
+        }
+
+        requestAnimationFrame(renderFrame);
+      }
+
+      renderFrame();
+    }
+
+    function toggleLiveStream() {
+      isLiveStreaming = !isLiveStreaming;
+      const btn = document.getElementById("btnLiveStream");
+      const btnText = document.getElementById("streamBtnText");
+      const badge = document.getElementById("camResBadge");
+      const recDot = document.getElementById("camRecIndicator");
+      const recText = document.getElementById("camRecText");
+
+      if (isLiveStreaming) {
+        btn.className = "btn btn-cam-stream streaming-active";
+        btnText.textContent = "Live Capturing (Low Res)";
+        badge.textContent = "STREAM: 320×240 (15 FPS)";
+        recText.textContent = "LIVE STREAM (LOW-RES)";
+        recDot.style.display = "inline-flex";
+        showToast("Low-resolution continuous live stream engaged (320x240 @ 15fps)", "info");
+      } else {
+        btn.className = "btn btn-cam-stream";
+        btnText.textContent = "Resume Live Stream";
+        badge.textContent = "STANDBY (PAUSED)";
+        recText.textContent = "STANDBY";
+        recDot.style.display = "none";
+        showToast("Live camera stream paused to conserve ad-hoc mesh bandwidth.", "info");
+      }
+    }
+
+    function capture2MpImage() {
+      // Shutter flash effect
+      const flash = document.getElementById("camFlashOverlay");
+      if (flash) {
+        flash.classList.add("cam-flash-active");
+        setTimeout(() => flash.classList.remove("cam-flash-active"), 120);
+      }
+
+      // Shutter sound
+      playShutterClick();
+
+      // Render offscreen 2MP image (1600 x 1200)
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = 1600;
+      offCanvas.height = 1200;
+      const oCtx = offCanvas.getContext("2d");
+
+      const img = document.getElementById("camFallbackImg");
+      if (img && img.complete && img.naturalWidth > 0) {
+        oCtx.drawImage(img, 0, 0, 1600, 1200);
+      } else {
+        oCtx.fillStyle = "#0f172a";
+        oCtx.fillRect(0, 0, 1600, 1200);
+      }
+
+      // High-resolution tactical overlay watermark
+      oCtx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      oCtx.fillRect(0, 1100, 1600, 100);
+
+      oCtx.fillStyle = "#ffffff";
+      oCtx.font = "bold 26px sans-serif";
+      oCtx.fillText(`DRONE AD-HOC NETWORK ` + String.fromCharCode(8226) + ` 2MP HIGH-RESOLUTION CAPTURE`, 40, 1155);
+
+      oCtx.fillStyle = "#38bdf8";
+      oCtx.font = "22px monospace";
+      const now = new Date().toISOString().replace('T', ' ').substr(0, 19);
+      oCtx.fillText(`RES: 1600x1200 | NODE: ${activeCamDrone} | ALT: 45.2m | GPS: 33.6844° N, 73.0479° E | ${now}`, 40, 1185);
+
+      // Save Data URL
+      captured2MpDataUrl = offCanvas.toDataURL("image/jpeg", 0.95);
+
+      // Render to snapshot preview modal
+      const previewCanvas = document.getElementById("snapshotPreviewCanvas");
+      if (previewCanvas) {
+        previewCanvas.width = 1600;
+        previewCanvas.height = 1200;
+        const pCtx = previewCanvas.getContext("2d");
+        pCtx.drawImage(offCanvas, 0, 0);
+      }
+
+      document.getElementById("snapshotModal").classList.add("active");
+      showToast("2MP Snapshot captured (1600x1200 UXGA) - Geotagged to Drone-01", "success");
+    }
+
+    function closeSnapshotModal() {
+      document.getElementById("snapshotModal").classList.remove("active");
+    }
+
+    function downloadSnapshot() {
+      if (!captured2MpDataUrl) return;
+      const a = document.createElement("a");
+      a.href = captured2MpDataUrl;
+      a.download = `drone_2mp_capture_${activeCamDrone}_${Date.now()}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast("Downloading 2MP high-resolution image (.jpg)", "success");
+    }
+
+    function switchCamSource(droneId) {
+      activeCamDrone = droneId;
+      document.getElementById("camSourceSelect").value = droneId;
+      const hudTitle = document.getElementById("activeHudDroneTitle");
+      if (hudTitle) {
+        hudTitle.textContent = `LIVE TELEMETRY HUD ` + String.fromCharCode(8226) + ` ${droneId.toUpperCase()}`;
+      }
+      showToast(`Switched optical viewfinder feed to ${droneId}`, "info");
+    }
+
+    function playShutterClick() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1400, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.09);
+      } catch (e) {}
+    }
+
+    /* --------------------------------------------------------------------------
+       MULTI-DRONE FLEET MANAGEMENT & LOW BATTERY REPLACEMENT
+       -------------------------------------------------------------------------- */
     let radarAngle = 0;
-    const meshDrones = [
-      { id: "Drone-01", label: "This Node", x: 0, y: 0, color: "#df0024", role: "Master Relay" },
-      { id: "Drone-02", label: "Beta (Gateway)", x: 80, y: -70, color: "#10b981", role: "Starlink Uplink" },
-      { id: "Drone-03", label: "Gamma (Recon)", x: -110, y: 90, color: "#06b6d4", role: "Forward Scout" },
-      { id: "Drone-04", label: "Delta (Base)", x: 130, y: 110, color: "#f59e0b", role: "Standby Pad" }
+    let meshDrones = [
+      {
+        id: "Drone-01",
+        callsign: "Alpha",
+        label: "Drone-01 (Alpha)",
+        role: "Active Gateway",
+        status: "Airborne (Primary)",
+        battery: 84,
+        altitude: "45.2 m",
+        rssi: -54,
+        speed: "12.4 km/h",
+        mac: "24:6F:28:1A:00:01",
+        ip: "192.168.4.1",
+        x: 0,
+        y: 0,
+        color: "#df0024",
+        isDepleted: false,
+        flightTime: "27m 14s"
+      },
+      {
+        id: "Drone-02",
+        callsign: "Beta",
+        label: "Drone-02 (Beta)",
+        role: "Forward Relay",
+        status: "Airborne",
+        battery: 71,
+        altitude: "52.0 m",
+        rssi: -58,
+        speed: "14.1 km/h",
+        mac: "24:6F:28:1A:00:02",
+        ip: "192.168.4.10",
+        x: 80,
+        y: -70,
+        color: "#10b981",
+        isDepleted: false,
+        flightTime: "21m 40s"
+      },
+      {
+        id: "Drone-03",
+        callsign: "Gamma",
+        label: "Drone-03 (Gamma)",
+        role: "Forward Thermal Recon",
+        status: "Low Battery",
+        battery: 22,
+        altitude: "38.5 m",
+        rssi: -72,
+        speed: "8.5 km/h",
+        mac: "24:6F:28:1A:00:03",
+        ip: "192.168.4.15",
+        x: -110,
+        y: 90,
+        color: "#ef4444",
+        isDepleted: true,
+        flightTime: "3m 45s (Depleting)"
+      },
+      {
+        id: "Drone-04",
+        callsign: "Delta",
+        label: "Drone-04 (Delta)",
+        role: "Standby Base Node",
+        status: "Armed on Pad 1",
+        battery: 100,
+        altitude: "0.0 m (Base)",
+        rssi: -45,
+        speed: "0.0 km/h",
+        mac: "24:6F:28:1A:00:04",
+        ip: "192.168.4.20",
+        x: 130,
+        y: 110,
+        color: "#f59e0b",
+        isDepleted: false,
+        flightTime: "35m 00s (Full)"
+      }
     ];
+
+    function renderDroneFleet() {
+      const container = document.getElementById("droneFleetCardsContainer");
+      const badge = document.getElementById("tabDronesBadge");
+      const countBadge = document.getElementById("fleetOnlineCountBadge");
+      if (!container) return;
+
+      container.innerHTML = "";
+      if (badge) badge.textContent = meshDrones.length + " Drones";
+      if (countBadge) countBadge.textContent = meshDrones.length + " Online Nodes";
+
+      meshDrones.forEach(drone => {
+        const card = document.createElement("div");
+        const isLow = drone.battery <= 25;
+        card.className = "fleet-drone-card" + (isLow ? " critical-battery" : "");
+
+        const fillBg = drone.battery > 50 ? "#10b981" : drone.battery > 25 ? "#f59e0b" : "#ef4444";
+
+        card.innerHTML = `
+          <div class="fleet-drone-header">
+            <div class="fleet-drone-title">
+              <span class="status-dot" style="background: ${drone.color};"></span>
+              <strong>${drone.label}</strong>
+              <span style="font-size: 0.76rem; color: var(--text-muted);">&bull; ${drone.role}</span>
+            </div>
+            <span class="signal-badge ${isLow ? 'signal-weak' : 'signal-excellent'}" style="${isLow ? 'background:rgba(239,68,68,0.2); color:#ef4444;' : ''}">
+              ${isLow ? '⚠️ LOW BATTERY' : drone.status}
+            </span>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+              <span>Battery: <strong style="color: ${fillBg};">${drone.battery}%</strong></span>
+              <span style="color: var(--text-dim);">Flight Time: ${drone.flightTime}</span>
+            </div>
+            <div class="fleet-battery-meter">
+              <div class="fleet-battery-fill" style="width: ${drone.battery}%; background: ${fillBg};"></div>
+            </div>
+          </div>
+
+          <div class="fleet-specs-grid">
+            <div class="fleet-spec-box">
+              <div style="font-size:0.68rem; text-transform:uppercase;">Altitude</div>
+              <div class="fleet-spec-val">${drone.altitude}</div>
+            </div>
+            <div class="fleet-spec-box">
+              <div style="font-size:0.68rem; text-transform:uppercase;">Signal (RSSI)</div>
+              <div class="fleet-spec-val">${drone.rssi} dBm</div>
+            </div>
+            <div class="fleet-spec-box">
+              <div style="font-size:0.68rem; text-transform:uppercase;">IP / MAC</div>
+              <div class="fleet-spec-val" style="font-family:monospace; font-size: 0.72rem;">${drone.ip}</div>
+            </div>
+          </div>
+
+          <div class="fleet-card-actions">
+            ${isLow ? `
+              <button class="btn btn-gradient" style="background: linear-gradient(135deg, #ef4444, #df0024); font-size: 0.76rem; padding: 6px 12px; box-shadow: 0 4px 10px rgba(239,68,68,0.35);" onclick="replaceLowBatteryDrone('${drone.id}')">
+                🚨 Replace Drone (Failover)
+              </button>
+            ` : ''}
+            <button class="btn btn-secondary" style="font-size: 0.74rem; padding: 6px 10px;" onclick="switchCamSource('${drone.id}')">
+              📷 View Cam
+            </button>
+            <button class="btn btn-secondary" style="font-size: 0.74rem; padding: 6px 10px;" onclick="pingSpecificDrone('${drone.id}')">
+              Ping (${Math.abs(drone.rssi) - 40}ms)
+            </button>
+            ${!isLow && drone.id !== "Drone-01" ? `
+              <button class="btn btn-secondary" style="font-size: 0.74rem; padding: 6px 10px;" onclick="commandDrone('${drone.id}', 'Hold Position')">
+                Hold Pos
+              </button>
+            ` : ''}
+            ${isLow ? `
+              <button class="btn btn-secondary" style="font-size: 0.74rem; padding: 6px 10px;" onclick="commandDrone('${drone.id}', 'Return-to-Home (RTH)')">
+                RTH Base
+              </button>
+            ` : ''}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function pingSpecificDrone(droneId) {
+      showToast(`Ping response from ${droneId}: 12ms RTT (Mesh link 99.4% quality)`, "success");
+    }
+
+    function commandDrone(droneId, cmd) {
+      showToast(`Telemetry command "${cmd}" transmitted to ${droneId} over BATMAN-adv mesh`, "info");
+    }
+
+    function replaceLowBatteryDrone(depletedDroneId) {
+      // Configure target replacement in handover tab
+      const select = document.getElementById("replacementDroneSelect");
+      if (select) {
+        select.value = "drone-04";
+      }
+      switchTab("handover");
+      showToast(`Initiating replacement for depleted ${depletedDroneId} (22%). Standby Drone-04 selected for handover.`, "danger");
+
+      const logBox = document.getElementById("handoverTerminalLog");
+      if (logBox) {
+        const time = new Date().toTimeString().split(' ')[0];
+        logBox.innerHTML += `<br />[${time}] ALERT: Initiating urgent battery failover for ${depletedDroneId}.`;
+        logBox.scrollTop = logBox.scrollHeight;
+      }
+    }
+
+    function triggerQuickBatteryReplacement() {
+      replaceLowBatteryDrone("Drone-03");
+    }
+
+    function openAddDroneModal() {
+      document.getElementById("addDroneModal").classList.add("active");
+    }
+
+    function closeAddDroneModal() {
+      document.getElementById("addDroneModal").classList.remove("active");
+    }
+
+    function submitAddDrone(e) {
+      e.preventDefault();
+      const callsign = document.getElementById("newDroneCallsign").value.trim();
+      const role = document.getElementById("newDroneRole").value;
+      const mac = document.getElementById("newDroneMac").value.trim();
+      const battery = parseInt(document.getElementById("newDroneBattery").value) || 100;
+      const dist = document.getElementById("newDroneDist").value.trim();
+
+      const newId = "Drone-" + (meshDrones.length < 9 ? "0" : "") + (meshDrones.length + 1);
+
+      // Random position on radar
+      const angle = Math.random() * Math.PI * 2;
+      const distRadius = 60 + Math.random() * 80;
+
+      meshDrones.push({
+        id: newId,
+        callsign: callsign,
+        label: `${newId} (${callsign})`,
+        role: role,
+        status: "Paired (Mesh Ready)",
+        battery: battery,
+        altitude: "30.0 m",
+        rssi: -62,
+        speed: "0.0 km/h",
+        mac: mac,
+        ip: `192.168.4.${meshDrones.length + 15}`,
+        x: Math.round(Math.cos(angle) * distRadius),
+        y: Math.round(Math.sin(angle) * distRadius),
+        color: "#8b5cf6",
+        isDepleted: battery <= 25,
+        flightTime: `${Math.round((battery / 100) * 35)}m`
+      });
+
+      // Add to cam source select
+      const camSelect = document.getElementById("camSourceSelect");
+      if (camSelect) {
+        const opt = document.createElement("option");
+        opt.value = newId;
+        opt.textContent = `${newId} (${callsign} - ${role})`;
+        camSelect.appendChild(opt);
+      }
+
+      closeAddDroneModal();
+      renderDroneFleet();
+      drawRadar();
+      showToast(`${callsign} successfully registered and paired to AdHoc Mesh on IP 192.168.4.${meshDrones.length + 14}!`, "success");
+    }
 
     function drawRadar() {
       const canvas = document.getElementById("radarCanvas");
@@ -2699,6 +3746,8 @@
        ONLOAD INITIALIZATION
        -------------------------------------------------------------------------- */
     window.addEventListener("DOMContentLoaded", () => {
+      initCameraFeed();
+      renderDroneFleet();
       initTheme();
       updateBatteryDisplay(84);
       renderUsers();
